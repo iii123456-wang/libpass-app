@@ -500,6 +500,7 @@ body:not(.watch) #watchExit{display:none}
 <div id="lightbox" hidden></div>
 <input type="file" id="photoInput" accept="image/*" hidden multiple>
 <input type="file" id="importInput" accept="application/json,.json" hidden>
+<audio id="ka" loop preload="auto" style="display:none"></audio>
 
 <script>
 'use strict';
@@ -525,7 +526,7 @@ const LS={
 };
 const S={
   settings:LS.get('settings',{examName:'目标考试',examDate:'',theme:'light',notifOn:false,notifGeo:true,
-    notifTimes:['08:00','13:00','19:00']}),
+    notifTimes:['08:00','13:00','19:00'],keepAlive:true}),
   locs:LS.get('locs',[
     {id:'l1',name:'图书馆',lat:null,lng:null,r:200},
     {id:'l2',name:'教学楼',lat:null,lng:null,r:200},
@@ -542,8 +543,16 @@ const S={
   rewards:LS.get('rewards',{candy:0,coins:0,coinsTotal:0,exCk:0,exMin:0,boxes:0,cards:[],txs:[],freeDay:'',popsDay:'',pops:0}),
   seen:LS.get('seen',false)
 };
-const R=S.rewards;
-const save=k=>LS.set(k,S[k]);
+let R=S.rewards;
+if(S.settings.keepAlive===undefined)S.settings.keepAlive=true;
+/* 云同步:令牌与同步配置(每台设备独立授权),删除墓碑用于多端合并 */
+let SYNCCFG=LS.get('syncCfg',null);     // {token,gistId,auto,lastAt,exam,cats,rew}
+const DELLOG=LS.get('delLog',[]);       // [{c:集合名,g:分组键|null,id,ts}]
+function tombstone(c,g,id){DELLOG.push({c,g,id,ts:Date.now()});if(DELLOG.length>400)DELLOG.splice(0,DELLOG.length-400);LS.set('delLog',DELLOG)}
+function stampSync(k){if(SYNCCFG){SYNCCFG[k]=Date.now();LS.set('syncCfg',SYNCCFG)}}
+let syncTid=0;
+function scheduleSync(){if(SYNCCFG&&SYNCCFG.auto){clearTimeout(syncTid);syncTid=setTimeout(()=>syncNow(),5000)}}
+const save=k=>{LS.set(k,S[k]);scheduleSync()};
 const ui={tab:'today',noteCat:'c1',q:'',quote:0,photoIds:new Set()};
 
 /* ================= 照片:IndexedDB ================= */
@@ -1011,8 +1020,79 @@ function renderRecords(){
 }
 
 /* ================= 专注计时 ================= */
-let T={dur:25*60,left:25*60,run:false,rest:false,endAt:0,ints:0,breaks:0,startTs:0,pausedLeft:0};
+let T={dur:25*60,left:25*60,run:false,rest:false,endAt:0,ints:0,breaks:0,startTs:0,pausedLeft:0,focusDur:0};
+let lastMedia=0,lastPersist=0;
 const PRESETS=[25,45,60,90];
+/* --- 熄屏保活 + 锁屏显示(媒体会话):静音循环音频让系统保持页面活跃,锁屏播放器显示剩余时长 --- */
+function makeSilentWav(){
+  const sr=8000,n=sr/2;const buf=new ArrayBuffer(44+n*2);const v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,'RIFF');v.setUint32(4,36+n*2,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);
+  v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++)v.setInt16(44+i*2,(i%20<10)?2:-2,true);
+  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+}
+function kaStart(){
+  if(!S.settings.keepAlive)return;
+  try{const a=$('#ka');a.volume=.02;const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}
+  if('mediaSession' in navigator){
+    try{
+      navigator.mediaSession.setActionHandler('play',()=>{if(!T.run&&!T.rest)timerStartPause()});
+      navigator.mediaSession.setActionHandler('pause',()=>{if(T.run)timerStartPause()});
+    }catch(e){}
+  }
+}
+function kaStop(clearMeta){
+  try{$('#ka').pause()}catch(e){}
+  if('mediaSession' in navigator&&clearMeta){
+    try{navigator.mediaSession.metadata=null;
+      if(navigator.mediaSession.setPositionState)navigator.mediaSession.setPositionState()}catch(e){}
+  }
+}
+function mediaUpdate(force){
+  if(!('mediaSession' in navigator)||!S.settings.keepAlive||!T.run)return;
+  const now=Date.now();if(!force&&now-lastMedia<5000)return;lastMedia=now;
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({
+      title:(T.rest?'休息中 ':'专注中 ')+mmss(T.left)+' · LibPass',
+      artist:'LibPass 备考打卡',album:'备考打卡',
+      artwork:[{src:'icon-192.png',sizes:'192x192',type:'image/png'},{src:'icon-512.png',sizes:'512x512',type:'image/png'}]});
+    const el=Math.min(T.dur,T.dur-T.left);
+    if(navigator.mediaSession.setPositionState)navigator.mediaSession.setPositionState({duration:T.dur,position:el,playbackRate:1});
+  }catch(e){}
+}
+/* --- 计时状态持久化:熄屏/被杀后按时间戳补账,数据不丢 --- */
+function persistTimer(){
+  LS.set('timer',{run:T.run,rest:T.rest,dur:T.dur,left:T.left,endAt:T.endAt,startTs:T.startTs,
+    ints:T.ints,breaks:T.breaks,focusDur:T.focusDur,ts:Date.now()});
+}
+function recordSession(elSec,completed){
+  if(elSec<60)return false;
+  const purity=Math.max(40,100-T.ints*15);
+  S.focus.push({id:uid(),day:dayKey(),ts:T.startTs||Date.now(),min:elSec/60,ints:T.ints,purity,done:!!completed});
+  save('focus');
+  return true}
+function restoreTimer(){
+  const sv=LS.get('timer',null);
+  if(!sv||!sv.startTs)return;
+  T.dur=sv.dur;T.rest=sv.rest;T.startTs=sv.startTs;T.ints=sv.ints||0;T.breaks=sv.breaks||0;T.focusDur=sv.focusDur||sv.dur;
+  if(sv.run&&sv.endAt){
+    const now=Date.now();
+    if(now>=sv.endAt){ // 离开期间已跑完:按完整时长补记
+      const el=sv.dur,wasRest=sv.rest;
+      if(recordSession(el,!wasRest))toast('🔔 你离开期间完成了 '+fmtMin(el/60)+' 的'+(wasRest?'休息':'专注')+',已记录');
+      resetTimer(wasRest?(T.focusDur||sv.dur):sv.dur);LS.del('timer');
+    }else{ // 仍在进行:恢复倒计时
+      T.left=Math.max(1,Math.round((sv.endAt-now)/1000));T.endAt=sv.endAt;T.run=true;
+      clearInterval(T.tid);T.tid=setInterval(timerTick,250);
+      kaStart();renderTimer();
+      setTimeout(()=>toast('⏳ 已恢复专注 · 剩余 '+mmss(T.left)),900);
+    }
+  }else{ // 暂停状态:恢复剩余秒数
+    T.left=Math.max(1,sv.left||sv.dur);T.run=false;renderTimer();
+  }
+}
 function renderPresets(){
   $('#presets').innerHTML=PRESETS.map(m=>`<button data-act="preset" data-m="${m}" class="${T.dur===m*60?'on':''}">${m} 分钟</button>`).join('')
     +`<button data-act="preset-custom" class="${![25,45,60,90].includes(T.dur/60)?'on':''}">自定义</button>`}
@@ -1034,11 +1114,16 @@ function renderTimer(){
 }
 function timerStartPause(){
   if(T.run){ // 暂停
-    T.run=false;T.pausedLeft=T.left;clearInterval(T.tid);renderTimer();return}
+    T.run=false;T.pausedLeft=T.left;clearInterval(T.tid);
+    try{$('#ka').pause()}catch(e){}
+    persistTimer();
+    if('mediaSession' in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:'已暂停 · 剩余 '+mmss(T.left)+' · LibPass',artist:'LibPass 备考打卡'})}catch(e){}}
+    renderTimer();return}
   if(T.left<=0){resetTimer(T.dur)}
   if(!T.startTs)T.startTs=Date.now();
   T.endAt=Date.now()+T.left*1000;T.run=true;
   clearInterval(T.tid);T.tid=setInterval(timerTick,250);
+  kaStart();persistTimer();mediaUpdate(true);
   renderTimer();
 }
 function timerTick(){
@@ -1048,17 +1133,21 @@ function timerTick(){
   if(!T.rest&&T.dur>=3600&&el>=3600*(T.breaks+1)&&T.left>0){T.breaks++;showRest()}
   if(T.left<=0){finishTimer(true);return}
   renderTimer();
+  const now=Date.now();
+  if(now-lastPersist>5000){lastPersist=now;persistTimer();mediaUpdate()}
 }
 function finishTimer(completed){
   clearInterval(T.tid);T.run=false;
   const el=T.dur-T.left;
   const wasRest=T.rest;
+  kaStop(true);
   if(!wasRest&&el>=60){
     const purity=Math.max(40,100-T.ints*15);
     S.focus.push({id:uid(),day:dayKey(),ts:T.startTs||Date.now(),min:el/60,ints:T.ints,purity,done:!!completed});
     save('focus');
     toast(completed?('🎉 专注完成 '+fmtMin(el/60)+' · 纯度 '+purity+'%'):'已记录本次专注');
   }
+  LS.del('timer');
   if(wasRest){
     resetTimer(T.focusDur||T.dur);
     toast('☕ 休息结束,回来继续吧');
@@ -1069,9 +1158,11 @@ function finishTimer(completed){
   }
   renderTab(ui.tab);
 }
-function resetTimer(sec){T.dur=sec;T.left=sec;T.run=false;T.rest=false;T.ints=0;T.breaks=0;T.startTs=0;clearInterval(T.tid);renderTimer()}
+function resetTimer(sec){T.dur=sec;T.left=sec;T.run=false;T.rest=false;T.ints=0;T.breaks=0;T.startTs=0;T.focusDur=sec;clearInterval(T.tid);LS.del('timer');renderTimer()}
 function showRest(){
   T.run=false;clearInterval(T.tid);
+  try{$('#ka').pause()}catch(e){}
+  persistTimer();
   const b=$('#restBanner');b.hidden=false;
   b.innerHTML=`<b>🫖 已连续专注 ${60*(T.breaks)} 分钟</b>站起来活动 3 分钟,接杯水,看看远处再回来——身体是刷题的本钱。
     <div class="rowbtns" style="margin-top:9px">
@@ -1089,6 +1180,7 @@ function showRestDone(){
 function startBreak(sec){
   T.focusDur=T.dur;          // 记住专注时长,休息结束后恢复
   T.rest=true;T.dur=sec;T.left=sec;T.ints=0;T.breaks=0;T.startTs=0;T.run=false;
+  kaStop(true);
   $('#restBanner').hidden=true;
   T.endAt=Date.now()+sec*1000;T.run=true;
   clearInterval(T.tid);T.tid=setInterval(timerTick,250);renderTimer();
@@ -1151,7 +1243,7 @@ function renameCat(){
     <input type="text" id="rnName" maxlength="12" value="${esc(cur.name)}" required></div>
     <button class="btn-main" type="submit">保存</button></form>`);
   $('#rnForm').onsubmit=e=>{e.preventDefault();
-    cur.name=$('#rnName').value.trim()||cur.name;save('cats');closeSheet();renderNotes();renderPlans();toast('已重命名')}}
+    cur.name=$('#rnName').value.trim()||cur.name;save('cats');stampSync('cats');closeSheet();renderNotes();renderPlans();toast('已重命名')}}
 
 /* ================= 计划(双线时间轴) ================= */
 function renderPlans(){
@@ -1242,10 +1334,13 @@ function openSettings(){
     <div class="frow"><label>目标考试名称</label><input type="text" id="setExamName" value="${esc(st.examName)}" maxlength="20"></div>
     <div class="frow"><label>考试日期(用于倒计时)</label><input type="date" id="setExamDate" value="${st.examDate||''}"></div>
     <div class="swrow"><span>🌙 深色模式</span><button class="sw ${st.theme==='dark'?'on':''}" data-act="set-theme" role="switch" aria-checked="${st.theme==='dark'}"></button></div>
+    <div class="swrow"><span>🖥️ 锁屏显示专注计时<br><span class="mut small">专注时后台轻声保活,熄屏也能看到剩余时长(设置→专注里可关闭音效干扰)</span></span><button class="sw ${st.keepAlive?'on':''}" data-act="set-keepalive"></button></div>
     <div class="swrow"><span>🔔 每日提醒<br><span class="mut small">到点提醒打卡(应用打开时有效)</span></span><button class="sw ${st.notifOn?'on':''}" data-act="set-notif"></button></div>
     <div class="frow" style="margin-top:10px"><label>提醒时间点</label>
       <div class="rowbtns">${[0,1,2].map(i=>`<input type="time" class="nfTime" value="${times[i]||''}" style="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card2)">`).join('')}</div></div>
     <div class="swrow"><span>📍 到点定位提醒<br><span class="mut small">打开应用时检测是否在自习地点附近</span></span><button class="sw ${st.notifGeo?'on':''}" data-act="set-geonotif"></button></div>
+    <hr class="hr">
+    <div class="frow"><label>☁️ 多设备同步</label><div id="syncBox"></div></div>
     <hr class="hr">
     <div class="rowbtns">
       <button class="btn-ghost" data-act="open-locs">📍 地点管理</button>
@@ -1266,8 +1361,8 @@ function openSettings(){
       Apple Watch:watchOS 无法运行网页,正式手表端需原生开发——「手表视图预览」展示了配套表盘组件的设计样式。
     </div>`);
   // 考试信息即时保存
-  $('#setExamName').onchange=e=>{S.settings.examName=e.target.value.trim()||'目标考试';save('settings');renderHeader()};
-  $('#setExamDate').onchange=e=>{S.settings.examDate=e.target.value;save('settings');renderHeader()};
+  $('#setExamName').onchange=e=>{S.settings.examName=e.target.value.trim()||'目标考试';save('settings');renderHeader();stampSync('exam')};
+  $('#setExamDate').onchange=e=>{S.settings.examDate=e.target.value;save('settings');renderHeader();stampSync('exam')};
   // 提醒时间即时保存
   $$('.nfTime').forEach(t=>t.onchange=()=>{
     S.settings.notifTimes=$$('.nfTime').map(x=>x.value).filter(Boolean);
@@ -1275,7 +1370,7 @@ function openSettings(){
   $('#sheet').querySelector('[data-act=set-theme]').onclick=e=>{
     S.settings.theme=S.settings.theme==='dark'?'light':'dark';
     e.target.classList.toggle('on',S.settings.theme==='dark');
-    save('settings');applyTheme()};
+    save('settings');applyTheme();stampSync('exam')};
   $('#sheet').querySelector('[data-act=set-notif]').onclick=async e=>{
     if(!S.settings.notifOn){
       if('Notification'in window){
@@ -1290,6 +1385,12 @@ function openSettings(){
     e.target.classList.toggle('on',S.settings.notifGeo);
     save('settings');
     if(S.settings.notifGeo)startGeoWatch()};
+  $('#sheet').querySelector('[data-act=set-keepalive]').onclick=e=>{
+    S.settings.keepAlive=!S.settings.keepAlive;
+    e.target.classList.toggle('on',S.settings.keepAlive);
+    save('settings');
+    if(!S.settings.keepAlive&&T.run)kaStop(true)};
+  renderSyncBox();
 }
 function saveSettingsFromModal(){} // 设置项均为即时保存
 
@@ -1384,7 +1485,7 @@ const CARDS=[
 {id:'k18',s:'行政法',e:'🏛️',t:'行政复议一般 60 日内申请;行政诉讼一般 6 个月内起诉。'}
 ];
 let pendingReward=null;
-const saveR=()=>save('rewards');
+const saveR=()=>{save('rewards');stampSync('rew')};
 function txLog(t,v){R.txs.unshift({ts:Date.now(),t,v});if(R.txs.length>30)R.txs.length=30}
 function addCandy(n,label){R.candy+=n;txLog(label,'+'+n+' 🍬');saveR()}
 function addCoins(n,label){R.coins+=n;R.coinsTotal+=n;txLog(label,'+'+n+' 🪙');saveR()}
@@ -1480,6 +1581,113 @@ function renderRewards(){
 /* 闲时随机弹盲盒(每日最多 3 次) */
 setInterval(()=>{if(!document.hidden&&S.seen&&ui.tab&&Math.random()<.22)maybePop(1)},480000);
 
+/* ================= 云同步(GitHub Gist · 个人账户多设备同步) ================= */
+const GIST_DESC='LibPass Sync (do not edit)';
+const SYNC_HELP='照片不参与同步(留在各设备本机);其余数据全量同步。令牌仅保存在本机,可在 GitHub 随时撤销。';
+async function ghApi(method,path,body){
+  const r=await fetch('https://api.github.com'+path,{method,
+    headers:{'Authorization':'Bearer '+SYNCCFG.token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+    body:body?JSON.stringify(body):undefined});
+  if(!r.ok)throw new Error('GitHub '+r.status+(r.status===401?'(令牌失效,请重新连接)':''));
+  return r.json()}
+function collectSync(){return {app:'libpass-sync',v:1,at:Date.now(),
+  data:{checkins:S.checkins,moods:S.moods,cats:S.cats,notes:S.notes,plansL:S.plansL,plansS:S.plansS,
+        focus:S.focus,rewards:S.rewards,locs:S.locs,
+        exam:{examName:S.settings.examName,examDate:S.settings.examDate,theme:S.settings.theme}},
+  del:DELLOG}}
+function applyMerge(rd,remoteAt){
+  // 1) 墓碑并集
+  (rd.del||[]).forEach(t=>{const cur=DELLOG.find(x=>x.c===t.c&&(x.g||null)===(t.g||null)&&x.id===t.id);
+    if(!cur)DELLOG.push(t);else if(t.ts>cur.ts)cur.ts=t.ts});
+  LS.set('delLog',DELLOG);
+  const alive=(c,g,id,its)=>{const t=DELLOG.find(x=>x.c===c&&(x.g||null)===(g||null)&&x.id===id);return !(t&&t.ts>=(its||0))};
+  // 2) 追加型集合:按 id 并集(本地与远端条目都需通过墓碑检查)
+  const union=(lname,key)=>{const map={};
+    S[lname].forEach(x=>{if(x.id&&alive(key,null,x.id,x.ts||0))map[x.id]=x});
+    (rd.data[key]||[]).forEach(x=>{if(!x.id||map[x.id])return;if(alive(key,null,x.id,x.ts||0))map[x.id]=x});
+    S[lname]=Object.values(map);LS.set(lname,S[lname])};
+  union('checkins','checkins');union('focus','focus');
+  union('plansL','plansL');union('plansS','plansS');union('locs','locs');
+  // 3) 心态:按天,新者胜
+  const mm={};S.moods.forEach(m=>mm[m.day]=m);
+  (rd.data.moods||[]).forEach(m=>{if(!mm[m.day]||m.ts>mm[m.day].ts)mm[m.day]=m});
+  S.moods=Object.values(mm);LS.set('moods',S.moods);
+  // 4) 笔记:按分类列表,按 id 并集
+  const rn=rd.data.notes||{};const out={};
+  new Set([...Object.keys(S.notes),...Object.keys(rn)]).forEach(cid=>{
+    const map={};(S.notes[cid]||[]).forEach(n=>{if(alive('notes',cid,n.id,n.ts||0))map[n.id]=n});
+    (rn[cid]||[]).forEach(n=>{if(map[n.id])return;if(alive('notes',cid,n.id,n.ts||0))map[n.id]=n});
+    out[cid]=Object.values(map)});
+  S.notes=out;LS.set('notes',S.notes);
+  // 5) 设置级数据:按最后修改时间 LWW
+  if(remoteAt>(SYNCCFG.exam||0)&&rd.data.exam){S.settings.examName=rd.data.exam.examName||S.settings.examName;
+    S.settings.examDate=rd.data.exam.examDate||'';S.settings.theme=rd.data.exam.theme||S.settings.theme;
+    SYNCCFG.exam=remoteAt;LS.set('settings',S.settings)}
+  if(remoteAt>(SYNCCFG.cats||0)&&rd.data.cats){S.cats=rd.data.cats;SYNCCFG.cats=remoteAt;LS.set('cats',S.cats)}
+  if(remoteAt>(SYNCCFG.rew||0)&&rd.data.rewards){S.rewards=rd.data.rewards;R=S.rewards;SYNCCFG.rew=remoteAt;LS.set('rewards',S.rewards)}
+}
+async function syncNow(){
+  if(!SYNCCFG)return;
+  try{
+    let gist=SYNCCFG.gistId?await ghApi('GET','/gists/'+SYNCCFG.gistId):null;
+    if(!gist||(gist.files&&!gist.files['libpass-data.json'])){
+      const list=await ghApi('GET','/gists?per_page=100');
+      const found=(Array.isArray(list)?list:[]).find(g=>g.description===GIST_DESC);
+      if(found){SYNCCFG.gistId=found.id;LS.set('syncCfg',SYNCCFG);gist=await ghApi('GET','/gists/'+found.id)}
+      else{gist=await ghApi('POST','/gists',{description:GIST_DESC,public:false,
+        files:{'libpass-data.json':{content:JSON.stringify(collectSync())}}});
+        SYNCCFG.gistId=gist.id;LS.set('syncCfg',SYNCCFG)}
+    }
+    const file=gist.files&&gist.files['libpass-data.json'];
+    let remote=null;
+    if(file&&file.content){try{remote=JSON.parse(file.content)}catch(e){}}
+    let changed=false;
+    if(remote&&remote.app==='libpass-sync'){applyMerge(remote,remote.at);changed=true}
+    await ghApi('PATCH','/gists/'+SYNCCFG.gistId,{files:{'libpass-data.json':{content:JSON.stringify(collectSync())}}});
+    SYNCCFG.lastAt=Date.now();LS.set('syncCfg',SYNCCFG);
+    toast('☁️ 已同步'+(changed?' · 已合并云端数据':'')+' · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
+    renderHeader();renderTab(ui.tab);
+    if($('#syncBox'))renderSyncBox();
+  }catch(e){toast('同步失败:'+(e.message||e))}
+}
+async function syncConnectFlow(){
+  window.open('https://github.com/settings/tokens/new?scopes=gist&description=LibPass%E5%90%8C%E6%AD%A5');
+  openSheet('连接云端',`
+    <div class="mut small" style="line-height:1.8;margin-bottom:10px">
+      已为你打开 GitHub 令牌创建页(权限已预填,只需拉到最底点 <b>Generate token</b>)。<br>
+      1️⃣ 在 GitHub 页面点绿色按钮生成令牌<br>
+      2️⃣ 点复制按钮,把 <b>ghp_</b> 开头的令牌粘贴到这里<br>
+      3️⃣ 每台设备各连一次,之后自动同步
+    </div>
+    <form id="syncForm"><div class="frow"><label>粘贴令牌(ghp_ 开头)</label>
+      <input type="text" id="tokenPaste" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" required></div>
+      <button class="btn-main" type="submit">连接并同步</button>
+      <div class="mut small" style="margin-top:9px">${SYNC_HELP}</div></form>`);
+  $('#syncForm').onsubmit=async e=>{e.preventDefault();
+    const tok=$('#tokenPaste').value.trim();
+    if(!tok){toast('请先粘贴令牌');return}
+    toast('正在验证令牌…');
+    try{
+      const r=await fetch('https://api.github.com/gists?per_page=1',{headers:{Authorization:'Bearer '+tok}});
+      if(!r.ok)throw new Error('令牌无效或未勾选 gist 权限');
+      SYNCCFG={token:tok,gistId:null,auto:true,lastAt:0,exam:0,cats:0,rew:0};LS.set('syncCfg',SYNCCFG);
+      closeSheet();await syncNow();openSettings();
+    }catch(err){toast('连接失败:'+err.message)}};
+}
+function renderSyncBox(){
+  const box=$('#syncBox');if(!box)return;
+  if(!SYNCCFG){
+    box.innerHTML='<div class="mut small" style="margin-bottom:8px">'+SYNC_HELP+'</div>'+
+      '<div class="rowbtns"><button class="btn-main sm" data-act="sync-connect">🔗 连接云端</button></div>';
+  }else{
+    box.innerHTML='<div class="mut small" style="margin-bottom:8px">✅ 已连接 · 上次同步 '+
+      (SYNCCFG.lastAt?new Date(SYNCCFG.lastAt).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'刚连接')+
+      '</div><div class="rowbtns"><button class="btn-ghost" data-act="sync-now">立即同步</button>'+
+      '<button class="btn-ghost btn-danger" data-act="sync-disconnect">断开</button></div>'+
+      '<div class="swrow" style="margin-top:8px"><span>自动同步(改动后约 5 秒)</span><button class="sw '+(SYNCCFG.auto?'on':'')+'" data-act="set-autosync"></button></div>';
+  }
+}
+
 /* ================= 弹层 ================= */
 function openSheet(title,html){
   $('#sheet').innerHTML='<h2>'+esc(title)+'<button class="x" data-act="sheet-close" aria-label="关闭">✕</button></h2>'+html;
@@ -1509,11 +1717,11 @@ document.addEventListener('click',e=>{
         toast('已顺延到今天');renderTab(ui.tab)}break}
     case 'planL-toggle':{
       const p=S.plansL.find(x=>x.id===id);if(p){p.done=!p.done;save('plansL');renderPlans()}break}
-    case 'planL-del':{if(confirm('删除这个长期目标?')){S.plansL=S.plansL.filter(x=>x.id!==id);save('plansL');renderPlans()}break}
-    case 'planS-del':{if(confirm('删除这个任务?')){S.plansS=S.plansS.filter(x=>x.id!==id);save('plansS');renderTab(ui.tab)}break}
+    case 'planL-del':{if(confirm('删除这个长期目标?')){S.plansL=S.plansL.filter(x=>x.id!==id);tombstone('plansL',null,id);save('plansL');renderPlans()}break}
+    case 'planS-del':{if(confirm('删除这个任务?')){S.plansS=S.plansS.filter(x=>x.id!==id);tombstone('plansS',null,id);save('plansS');renderTab(ui.tab)}break}
     case 'note-cat':ui.noteCat=id;ui.q='';$('#noteSearch').value='';renderNotes();break;
     case 'note-rename':renameCat();break;
-    case 'note-del':{ if(confirm('删除这条笔记?')){S.notes[a.dataset.cat]=(S.notes[a.dataset.cat]||[]).filter(n=>n.id!==id);save('notes');renderNotes()}break}
+    case 'note-del':{ if(confirm('删除这条笔记?')){S.notes[a.dataset.cat]=(S.notes[a.dataset.cat]||[]).filter(n=>n.id!==id);tombstone('notes',a.dataset.cat,id);save('notes');renderNotes()}break}
     case 'preset':if(!T.run){resetTimer(+a.dataset.m*60)}break;
     case 'preset-custom':{
       if(T.run)break;
@@ -1528,12 +1736,12 @@ document.addEventListener('click',e=>{
     case 'rest3':startBreak(180);break;
     case 'rest5':startBreak(300);break;
     case 'rest-skip':$('#restBanner').hidden=true;T.endAt=Date.now()+T.left*1000;T.run=true;
-      clearInterval(T.tid);T.tid=setInterval(timerTick,250);renderTimer();break;
+      clearInterval(T.tid);T.tid=setInterval(timerTick,250);kaStart();persistTimer();renderTimer();break;
     case 'rest-clear':$('#restBanner').hidden=true;break;
     case 'open-settings':openSettings();break;
     case 'open-locs':openLocs();break;
     case 'sheet-close':closeSheet();break;
-    case 'loc-del':{if(confirm('删除该地点?')){S.locs=S.locs.filter(l=>l.id!==id);save('locs');openLocs();renderToday()}break}
+    case 'loc-del':{if(confirm('删除该地点?')){S.locs=S.locs.filter(l=>l.id!==id);tombstone('locs',null,id);save('locs');openLocs();renderToday()}break}
     case 'export':doExport(false);break;
     case 'export-ph':doExport(true);break;
     case 'import':$('#importInput').click();break;
@@ -1550,6 +1758,17 @@ document.addEventListener('click',e=>{
       R.candy-=30;txLog('开盲盒','-30 🍬');saveR();showBox();break}
     case 'box-open':openBoxAnim();break;
     case 'box-collect':collectBox();break;
+    case 'set-autosync':{if(!SYNCCFG)break;
+      SYNCCFG.auto=!SYNCCFG.auto;LS.set('syncCfg',SYNCCFG);
+      a.classList.toggle('on',SYNCCFG.auto);break}
+    case 'set-keepalive':{S.settings.keepAlive=!S.settings.keepAlive;save('settings');
+      a.classList.toggle('on',S.settings.keepAlive);
+      if(!S.settings.keepAlive&&T.run)kaStop(true);break}
+    case 'sync-connect':syncConnectFlow();break;
+    case 'sync-now':{if(!SYNCCFG)break;toast('正在同步…');syncNow();break}
+    case 'sync-disconnect':{if(!SYNCCFG)break;
+      if(confirm('断开云同步?本机数据不受影响,云端备份会保留。')){
+        SYNCCFG=null;LS.set('syncCfg',null);renderSyncBox();toast('已断开云同步')}break}
     case 'wmood':{const btn=a;setMood(btn.dataset.e,btn.dataset.l);
       $$('#wmood button').forEach(b=>b.classList.toggle('on',b.dataset.e===btn.dataset.e));break}
   }
@@ -1631,6 +1850,10 @@ async function init(){
   const today=dayKey();
   $('#plStart').value=addDays(today,-7);$('#plEnd').value=addDays(today,60);
   $('#psDue').value=today;
+  // 锁屏保活音频源 + 恢复被打断的专注 + 启动即同步
+  try{$('#ka').src=makeSilentWav()}catch(e){}
+  restoreTimer();
+  if(SYNCCFG)setTimeout(()=>syncNow(),1500);
 }
 init();
 </script>
