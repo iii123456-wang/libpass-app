@@ -334,6 +334,38 @@ body.watch #starFab{display:none!important}
 .boxHint{color:#EAE4E9;font-size:14px;letter-spacing:3px}
 html[data-theme="dark"] #boxReveal{background:#2E2A34}
 
+/* ============ 专注打卡 / 战报 / 可视化 ============ */
+.focusLive{text-align:center;padding:16px 6px 6px}
+.focusLive .breath{font-size:56px;line-height:1.3;animation:breath 3.4s ease-in-out infinite}
+.focusLive .breath.idle{animation:none;filter:grayscale(.2)}
+@keyframes breath{0%,100%{transform:scale(1);opacity:.82}50%{transform:scale(1.12);opacity:1}}
+.rateGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.rateBtn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 2px;border-radius:14px;background:var(--card2);border:1.5px solid var(--line)}
+.rateBtn:active{transform:scale(.94)}
+.rateBtn .re{font-size:26px}
+.rateBtn b{font-size:12px}
+.rateBtn .rc{font-size:10px;color:var(--mut)}
+.reportCard{border-radius:20px;padding:20px 18px;background:linear-gradient(150deg,#C7B4D8,#E3BFCB);color:#fff;box-shadow:0 12px 30px rgba(150,110,160,.35)}
+html[data-theme="dark"] .reportCard{background:linear-gradient(150deg,#5C4A73,#7A5568)}
+.reportCard .rgreet{font-size:15.5px;line-height:1.9;font-weight:600}
+.reportCard .rmoment{margin-top:12px;font-size:13px;line-height:1.7;opacity:.94;background:rgba(255,255,255,.16);border-radius:12px;padding:9px 12px}
+.reportCard .rmeta{margin-top:10px;font-size:11px;opacity:.8}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.qcell{border:1px solid var(--line);border-radius:16px;padding:11px 12px;background:var(--card2);min-height:92px;cursor:pointer}
+.qcell b{font-size:13.5px;display:flex;align-items:center;gap:6px}
+.qcell .qn{margin-left:auto;font-size:19px;font-weight:800;color:var(--pri-deep)}
+.qcell .qi{margin-top:5px;font-size:11.5px;color:var(--mut);line-height:1.6}
+.chartWrap{width:100%;overflow:hidden}
+.chartWrap svg{width:100%;height:auto;display:block}
+.starMap{border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.twinkle{animation:twk 3s ease-in-out infinite}
+@keyframes twk{0%,100%{opacity:.55}50%{opacity:1}}
+.galCap{font-size:11px;color:var(--mut);margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.orbRow{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 2px}
+.orbChip{display:inline-flex;align-items:center;gap:4px;font-size:12px;border-radius:999px;padding:4px 10px;background:var(--card2);border:1px solid var(--line)}
+.gardenFlowers{font-size:30px;letter-spacing:4px;min-height:40px}
+.capInput{width:100%;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);margin-top:10px}
+
 /* ============ 手表视图 ============ */
 body.watch #app{display:none}
 body.watch #bgfx{display:none}
@@ -376,27 +408,7 @@ body:not(.watch) #watchExit{display:none}
 
     <section class="tab" id="tab-focus">
       <div class="cards">
-        <div class="card span2">
-          <h3>⏳ 专注计时</h3>
-          <div class="presets" id="presets"></div>
-          <div class="bigring">
-            <svg viewBox="0 0 210 210" width="210" height="210">
-              <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#9A7FBC"/><stop offset="1" stop-color="#CE93AB"/>
-              </linearGradient></defs>
-              <circle cx="105" cy="105" r="92" fill="none" stroke="rgba(143,118,173,.14)" stroke-width="12"/>
-              <circle id="ring" cx="105" cy="105" r="92" fill="none" stroke="url(#rg)" stroke-width="12"
-                stroke-linecap="round" stroke-dasharray="578.1" stroke-dashoffset="0"/>
-            </svg>
-            <div class="txt"><b id="tTime">25:00</b><span id="tState">准备专注</span></div>
-          </div>
-          <div id="tMeta" class="mut small"></div>
-          <div class="rowbtns" style="justify-content:center">
-            <button id="tStart" class="btn-main" style="max-width:240px" data-act="timer-start">开始专注</button>
-            <button id="tStop" class="btn-ghost" data-act="timer-stop" hidden>结束本次并记录</button>
-          </div>
-          <div id="restBanner" hidden></div>
-        </div>
+        <div class="card span2" id="focusCard"></div>
         <div class="card span2">
           <h3>📒 专注记录</h3>
           <div id="todayFocusLine" class="mut small" style="margin-bottom:6px"></div>
@@ -437,10 +449,19 @@ body:not(.watch) #watchExit{display:none}
           <form id="planSForm" class="pform">
             <input type="text" id="psTitle" placeholder="要做什么?如:资料分析 20 题" required>
             <div><label>截止日</label><input type="date" id="psDue" required></div>
+            <div><label>放进哪个宫格</label><select id="psQuad"></select></div>
             <button class="btn-main sm" type="submit">＋添加</button>
           </form>
           <div id="planSStats"></div>
           <div id="planSList"></div>
+        </div>
+        <div class="card span2">
+          <h3>📊 节奏视图 <span class="mut small">时间的形状,一眼看清</span></h3>
+          <div id="rhythmBody"></div>
+        </div>
+        <div class="card span2">
+          <h3>🪟 四宫格任务图 <span class="mut small">点击宫格可重命名 / 管理</span></h3>
+          <div class="quad" id="quadGrid"></div>
         </div>
       </div>
     </section>
@@ -448,8 +469,10 @@ body:not(.watch) #watchExit{display:none}
     <section class="tab" id="tab-rewards">
       <div class="cards">
         <div class="card span2" id="walletCard"></div>
+        <div class="card span2"><h3>🌌 成长星图</h3><div id="starBody"></div></div>
         <div class="card"><h3>🍬 兑换所</h3><div id="exBody"></div></div>
         <div class="card"><h3>🎁 盲盒小屋</h3><div id="boxBody"></div></div>
+        <div class="card span2"><h3>🌷 情绪花园</h3><div id="gardenBody"></div></div>
         <div class="card span2"><h3>🏦 金币银行</h3><div id="bankBody"></div></div>
         <div class="card span2"><h3>🗂️ 考点卡册 <span class="hact" id="cardCount"></span></h3><div id="cardBody"></div></div>
       </div>
@@ -540,10 +563,14 @@ const S={
   plansL:LS.get('plansL',[]),
   plansS:LS.get('plansS',[]),
   focus:LS.get('focus',[]),
-  rewards:LS.get('rewards',{candy:0,coins:0,coinsTotal:0,exCk:0,exMin:0,boxes:0,cards:[],txs:[],freeDay:'',popsDay:'',pops:0}),
+  reports:LS.get('reports',[]),
+  rewards:LS.get('rewards',{candy:0,coins:0,coinsTotal:0,exCk:0,exMin:0,boxes:0,cards:[],txs:[],freeDay:'',popsDay:'',pops:0,
+    orbs:{},constellations:{},dayBoxes:{day:'',n:0}}),
   seen:LS.get('seen',false)
 };
 let R=S.rewards;
+if(!R.orbs)R.orbs={};if(!R.constellations)R.constellations={};if(!R.dayBoxes)R.dayBoxes={day:'',n:0};
+if(!R.gardens)R.gardens=[];if(!R.pendingCons)R.pendingCons=[];
 if(S.settings.keepAlive===undefined)S.settings.keepAlive=true;
 /* 云同步:令牌与同步配置(每台设备独立授权),删除墓碑用于多端合并 */
 let SYNCCFG=LS.get('syncCfg',null);     // {token,gistId,auto,lastAt,exam,cats,rew}
@@ -805,10 +832,17 @@ function compress(file){return new Promise((res,rej)=>{
 function openLightbox(id){
   const p=PHOTOS.find(x=>x.id===id);if(!p)return;
   const lb=$('#lightbox');lb.hidden=false;
-  lb.innerHTML=`<img src="${p.dataUrl}" alt="照片"><div class="rowbtns">
-    <span class="chip gray" style="background:rgba(255,255,255,.15);color:#ddd">${p.day} ${hm(p.ts)}</span>
-    <button class="btn-ghost" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent" data-act="lb-close">关闭</button>
-    <button class="btn-ghost btn-danger" style="background:rgba(255,255,255,.12)" data-act="photo-del" data-id="${p.id}">删除</button></div>`;
+  lb.innerHTML=`<img src="${p.dataUrl}" alt="照片">
+    <div style="width:min(86vw,420px)">
+      <input class="capInput" id="capInput" maxlength="60" placeholder="这张照片想说什么?写一句话…"
+        value="${esc(p.cap||'')}">
+      <div class="rowbtns" style="justify-content:center;margin-top:10px;flex-wrap:wrap">
+        <span class="chip gray" style="background:rgba(255,255,255,.15);color:#ddd">${p.day} ${hm(p.ts)}</span>
+        <button class="btn-ghost" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent" data-act="photo-cap" data-id="${p.id}">保存配文</button>
+        <button class="btn-ghost" style="background:rgba(255,255,255,.12);color:#fff;border-color:transparent" data-act="lb-close">关闭</button>
+        <button class="btn-ghost btn-danger" style="background:rgba(255,255,255,.12)" data-act="photo-del" data-id="${p.id}">删除</button>
+      </div>
+    </div>`;
 }
 
 /* ================= 每日一句 ================= */
@@ -992,12 +1026,37 @@ function renderRecords(){
   const fmax=Math.max(30,...fdays.map(x=>x.f));
   const bars=fdays.map(x=>`<div class="b"><span class="v">${Math.round(x.f)}</span>
     <div class="bar" style="height:${Math.max(3,Math.round(x.f/fmax*100))}%"></div><span class="n">${x.d.slice(8)}</span></div>`).join('');
-  // 相册
+  // 相册(带配文)
   const byDay={};PHOTOS.forEach(p=>{(byDay[p.day]=byDay[p.day]||[]).push(p)});
   const dkeys=Object.keys(byDay).sort().reverse();
   const gal=dkeys.length?dkeys.map(d=>`<div class="galDay">${d} (${byDay[d].length})</div>
-    <div class="gal">${byDay[d].map(p=>`<img src="${p.dataUrl}" loading="lazy" data-act="photo-open" data-id="${p.id}" alt="${d}照片">`).join('')}</div>`).join('')
+    <div class="gal">${byDay[d].map(p=>`<div><img src="${p.dataUrl}" loading="lazy" data-act="photo-open" data-id="${p.id}" alt="${d}照片">${p.cap?`<div class="galCap">${esc(p.cap)}</div>`:''}</div>`).join('')}</div>`).join('')
     :'<div class="empty">还没有照片,去「今日」拍一张吧</div>';
+  // 情绪曲线:近 14 天 心情分值 × 专注分钟
+  const mlabels=[],mscore=[],mfocus=[];
+  let hi=[],lo=[];
+  for(let i=13;i>=0;i--){const d=addDays(k,-i);
+    const m=S.moods.find(x=>x.day===d);
+    if(!m)continue;
+    const sc=MOOD_SCORE[m.e]||3;
+    const fmin=S.focus.filter(x=>x.day===d).reduce((a,x)=>a+x.min,0);
+    mlabels.push(d.slice(5));mscore.push(sc);mfocus.push(Math.round(fmin));
+    if(sc>=4&&fmin>0)hi.push(fmin);if(sc<=2.5&&fmin>0)lo.push(fmin)}
+  const mmax=Math.max(60,...mfocus);
+  const curve=mlabels.length>1?polyChart(mlabels,[
+    {v:mscore.map(x=>x*20),c:'#C08CA4'},{v:mfocus.map(x=>x/mmax*100),c:'#8F76AD',dash:true}])+'<div class="mut small" style="margin-top:4px"><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#C08CA4;vertical-align:middle"></i> 心情分值(20=1分,100=5分) <i style="display:inline-block;width:14px;height:3px;background:#8F7FBC;vertical-align:middle"></i> 专注量(相对)</div>'
+    +'<div class="mut small" style="margin-top:8px;line-height:1.8">'+(()=> {
+        if(hi.length>=3&&lo.length>=3){const ah=Math.round(hi.reduce((a,b)=>a+b,0)/hi.length),al=Math.round(lo.reduce((a,b)=>a+b,0)/lo.length);
+          return '心情明亮的日子平均专注 <b>'+ah+'</b> 分钟,艰难的日子 <b>'+al+'</b> 分钟——'+(ah>=al?'你的高效常藏在好心情里,照顾情绪就是在照顾效率。':'艰难的日子里,你反而坐得更稳——这本身就是了不起的能力,不必一味自责。')}
+        return '再记录几天心态与专注,就能看见你的专属情绪曲线了。'})()+'</div>'
+    :'<div class="empty">记录心态后,这里会长出你的「备考情绪曲线」——看看焦虑日和疲惫日,谁更偷走你的专注</div>';
+  // 温柔战报册
+  const reports=[...(S.reports||[])].sort((a,b)=>b.ts-a.ts).slice(0,3);
+  const repHtml=reports.length?reports.map(r=>`<div class="reportCard" style="margin-bottom:10px">
+      <div class="rgreet" style="font-size:13.5px">${esc(r.sentence)}</div>
+      <div class="rmoment">💫 ${esc(r.moment)}</div>
+      <div class="rmeta">${esc(r.start)} ~ ${esc(r.end)} · 「${esc(r.title)}」</div></div>`).join('')
+    :'<div class="empty">完成一个长期目标时,这里会为你留下一张温柔战报 💌</div>';
   $('#recCards').innerHTML=`
   <div class="card span2">
     <div class="statRow">
@@ -1015,15 +1074,16 @@ function renderRecords(){
     <div class="hmlegend">少 <i style="background:rgba(143,118,173,.07)"></i><i class="l1" style="background:#E7D8E4"></i><i style="background:#D2BBD8"></i><i style="background:#B697CB"></i><i style="background:#9678B4"></i> 多</div></div>
   <div class="card"><h3>🎭 心态轨迹 <span class="hact">近 14 天</span></h3><div class="moodStrip" id="moodStrip">${strip}</div></div>
   <div class="card"><h3>⏳ 专注趋势 <span class="hact">近 7 天 · 分钟</span></h3><div class="bars">${bars}</div></div>
+  <div class="card span2"><h3>🫀 备考情绪曲线 <span class="hact">心情 × 专注 · 近 14 天</span></h3>${curve}</div>
+  <div class="card span2"><h3>💌 温柔战报册 <span class="hact">${(S.reports||[]).length} 张</span></h3>${repHtml}</div>
   <div class="card span2"><h3>📷 照片档案 <span class="hact">${PHOTOS.length} 张</span></h3>${gal}</div>`;
   const ms=$('#moodStrip');if(ms)ms.scrollLeft=ms.scrollWidth;
 }
 
-/* ================= 专注计时 ================= */
-let T={dur:25*60,left:25*60,run:false,rest:false,endAt:0,ints:0,breaks:0,startTs:0,pausedLeft:0,focusDur:0};
-let lastMedia=0,lastPersist=0;
-const PRESETS=[25,45,60,90];
-/* --- 熄屏保活 + 锁屏显示(媒体会话):静音循环音频让系统保持页面活跃,锁屏播放器显示剩余时长 --- */
+/* ================= 专注打卡(手动记录时段,不看倒计时) ================= */
+let T={run:false,startTs:0,ints:0,hiddenAt:0};
+let lastMedia=0;
+/* --- 熄屏保活 + 锁屏显示:开始专注后轻声保活,锁屏显示「专注中」 --- */
 function makeSilentWav(){
   const sr=8000,n=sr/2;const buf=new ArrayBuffer(44+n*2);const v=new DataView(buf);
   const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
@@ -1037,10 +1097,9 @@ function kaStart(){
   if(!S.settings.keepAlive)return;
   try{const a=$('#ka');a.volume=.02;const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}
   if('mediaSession' in navigator){
-    try{
-      navigator.mediaSession.setActionHandler('play',()=>{if(!T.run&&!T.rest)timerStartPause()});
-      navigator.mediaSession.setActionHandler('pause',()=>{if(T.run)timerStartPause()});
-    }catch(e){}
+    try{navigator.mediaSession.setActionHandler('pause',()=>{
+      setTimeout(()=>{try{const a=$('#ka');a.volume=.02;const p=a.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}},400)});
+      navigator.mediaSession.setActionHandler('play',()=>{})}catch(e){}
   }
 }
 function kaStop(clearMeta){
@@ -1050,157 +1109,104 @@ function kaStop(clearMeta){
       if(navigator.mediaSession.setPositionState)navigator.mediaSession.setPositionState()}catch(e){}
   }
 }
-function mediaUpdate(force){
+function mediaUpdate(){
   if(!('mediaSession' in navigator)||!S.settings.keepAlive||!T.run)return;
-  const now=Date.now();if(!force&&now-lastMedia<5000)return;lastMedia=now;
-  try{
-    navigator.mediaSession.metadata=new MediaMetadata({
-      title:(T.rest?'休息中 ':'专注中 ')+mmss(T.left)+' · LibPass',
-      artist:'LibPass 备考打卡',album:'备考打卡',
-      artwork:[{src:'icon-192.png',sizes:'192x192',type:'image/png'},{src:'icon-512.png',sizes:'512x512',type:'image/png'}]});
-    const el=Math.min(T.dur,T.dur-T.left);
-    if(navigator.mediaSession.setPositionState)navigator.mediaSession.setPositionState({duration:T.dur,position:el,playbackRate:1});
-  }catch(e){}
+  const now=Date.now();if(now-lastMedia<4000)return;lastMedia=now;
+  try{navigator.mediaSession.metadata=new MediaMetadata({
+    title:'专注中 · 请安心学习',artist:'LibPass 专注打卡',album:'备考打卡',
+    artwork:[{src:'icon-192.png',sizes:'192x192',type:'image/png'},{src:'icon-512.png',sizes:'512x512',type:'image/png'}]})}catch(e){}
 }
-/* --- 计时状态持久化:熄屏/被杀后按时间戳补账,数据不丢 --- */
+/* --- 状态持久化:熄屏/被杀后回来继续,时长按时间戳核算 --- */
 function persistTimer(){
-  LS.set('timer',{run:T.run,rest:T.rest,dur:T.dur,left:T.left,endAt:T.endAt,startTs:T.startTs,
-    ints:T.ints,breaks:T.breaks,focusDur:T.focusDur,ts:Date.now()});
+  LS.set('timer',{run:T.run,startTs:T.startTs,ints:T.ints,
+    pend:window._pendFocus?window._pendFocus.elSec:0,ts:Date.now()});
 }
-function recordSession(elSec,completed){
-  if(elSec<60)return false;
-  const purity=Math.max(40,100-T.ints*15);
-  S.focus.push({id:uid(),day:dayKey(),ts:T.startTs||Date.now(),min:elSec/60,ints:T.ints,purity,done:!!completed});
-  save('focus');
-  return true}
+const RATING={best:{e:'😇',l:'最佳',c:12},calm:{e:'🙂',l:'平和',c:10},distract:{e:'😵',l:'分神',c:8},
+  anxious:{e:'😰',l:'焦虑',c:6},fear:{e:'😨',l:'恐惧',c:6}};
 function restoreTimer(){
   const sv=LS.get('timer',null);
-  if(!sv||!sv.startTs)return;
-  T.dur=sv.dur;T.rest=sv.rest;T.startTs=sv.startTs;T.ints=sv.ints||0;T.breaks=sv.breaks||0;T.focusDur=sv.focusDur||sv.dur;
-  if(sv.run&&sv.endAt){
-    const now=Date.now();
-    if(now>=sv.endAt){ // 离开期间已跑完:按完整时长补记
-      const el=sv.dur,wasRest=sv.rest;
-      if(recordSession(el,!wasRest))toast('🔔 你离开期间完成了 '+fmtMin(el/60)+' 的'+(wasRest?'休息':'专注')+',已记录');
-      resetTimer(wasRest?(T.focusDur||sv.dur):sv.dur);LS.del('timer');
-    }else{ // 仍在进行:恢复倒计时
-      T.left=Math.max(1,Math.round((sv.endAt-now)/1000));T.endAt=sv.endAt;T.run=true;
-      clearInterval(T.tid);T.tid=setInterval(timerTick,250);
-      kaStart();renderTimer();
-      setTimeout(()=>toast('⏳ 已恢复专注 · 剩余 '+mmss(T.left)),900);
-    }
-  }else{ // 暂停状态:恢复剩余秒数
-    T.left=Math.max(1,sv.left||sv.dur);T.run=false;renderTimer();
-  }
+  if(!sv)return;
+  if(sv.pend){ // 结束后还没评分就离开了:如实补记(不评分不发糖)
+    S.focus.push({id:uid(),day:dayKey(sv.ts),ts:sv.startTs||sv.ts,min:sv.pend/60,ints:sv.ints||0,rating:null,candy:0});
+    save('focus');LS.del('timer');
+    setTimeout(()=>toast('📝 已补记一段 '+fmtMin(sv.pend/60)+' 的专注(未评分)'),900);
+    return}
+  if(sv.run&&sv.startTs){
+    T.run=true;T.startTs=sv.startTs;T.ints=sv.ints||0;
+    kaStart();mediaUpdate();
+    setTimeout(()=>toast('⏳ 你的专注仍在进行中,回来结束打卡就好'),900);
+  }else LS.del('timer');
 }
-function renderPresets(){
-  $('#presets').innerHTML=PRESETS.map(m=>`<button data-act="preset" data-m="${m}" class="${T.dur===m*60?'on':''}">${m} 分钟</button>`).join('')
-    +`<button data-act="preset-custom" class="${![25,45,60,90].includes(T.dur/60)?'on':''}">自定义</button>`}
 function fmtMin(min){return min>=60?Math.floor(min/60)+'小时'+Math.round(min%60)+'分':Math.round(min)+'分钟'}
-function renderTimer(){
-  renderPresets();
-  const C=578.1;
-  $('#ring').setAttribute('stroke-dashoffset',(C*(1-T.left/T.dur)).toFixed(1));
-  $('#tTime').textContent=mmss(T.left);
-  $('#tState').textContent=T.rest?'休息一下':T.run?'专注中':(T.left<T.dur?'已暂停':'准备专注');
-  const el=T.dur-T.left;
-  $('#tMeta').innerHTML=(T.startTs&&(el>0))?
-    `本次已专注 ${fmtMin(el/60)} · 中断 ${T.ints} 次 · 纯度 <b>${Math.max(40,100-T.ints*15)}%</b>`:'';
-  const btn=$('#tStart');
-  btn.textContent=T.run?'暂 停':(T.left<T.dur&&T.left>0?'继 续':(T.rest?'开始休息':'开始专注'));
-  btn.disabled=T.left<=0&&!T.rest;
-  btn.style.maxWidth=T.run?'260px':'180px';
-  $('#tStop').hidden=!(T.startTs&&!T.run&&!T.rest&&T.left<T.dur&&T.left>0);
+function fmtFull(ts){const d=new Date(ts);const h=d.getHours();
+  const seg=h<5?'深夜':h<11?'上午':h<13?'中午':h<18?'下午':'晚上';
+  return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 · '+seg+' '+hm(ts)}
+function focusStart(){
+  if(T.run)return;
+  T.run=true;T.startTs=Date.now();T.ints=0;
+  kaStart();mediaUpdate();persistTimer();renderFocus();
+  toast('🌱 已开始 · 把手机放下,安心去学习吧');
 }
-function timerStartPause(){
-  if(T.run){ // 暂停
-    T.run=false;T.pausedLeft=T.left;clearInterval(T.tid);
-    try{$('#ka').pause()}catch(e){}
-    persistTimer();
-    if('mediaSession' in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:'已暂停 · 剩余 '+mmss(T.left)+' · LibPass',artist:'LibPass 备考打卡'})}catch(e){}}
-    renderTimer();return}
-  if(T.left<=0){resetTimer(T.dur)}
-  if(!T.startTs)T.startTs=Date.now();
-  T.endAt=Date.now()+T.left*1000;T.run=true;
-  clearInterval(T.tid);T.tid=setInterval(timerTick,250);
-  kaStart();persistTimer();mediaUpdate(true);
-  renderTimer();
-}
-function timerTick(){
+function focusEnd(){
   if(!T.run)return;
-  T.left=Math.max(0,Math.round((T.endAt-Date.now())/1000));
-  const el=T.dur-T.left;
-  if(!T.rest&&T.dur>=3600&&el>=3600*(T.breaks+1)&&T.left>0){T.breaks++;showRest()}
-  if(T.left<=0){finishTimer(true);return}
-  renderTimer();
-  const now=Date.now();
-  if(now-lastPersist>5000){lastPersist=now;persistTimer();mediaUpdate()}
+  const elSec=Math.round((Date.now()-T.startTs)/1000);
+  T.run=false;kaStop(true);
+  if(elSec<60){T.startTs=0;T.ints=0;LS.del('timer');renderFocus();
+    toast('这段不足 1 分钟,就没有记录啦');return}
+  window._pendFocus={elSec};persistTimer();
+  openSheet('这段专注,感觉怎么样?',`
+    <div class="mut small" style="text-align:center;margin-bottom:12px">共 ${fmtMin(elSec/60)} · 诚实的感受,比时长更珍贵</div>
+    <div class="rateGrid">${Object.entries(RATING).map(([k,v])=>
+      `<button class="rateBtn" data-act="rate" data-k="${k}"><span class="re">${v.e}</span><b>${v.l}</b><span class="rc">+${v.c}🍬/25分钟</span></button>`).join('')}</div>
+    <div class="mut small" style="margin-top:12px;text-align:center">评分会直接换成糖果——承认焦虑,也是勇敢的一部分</div>`);
 }
-function finishTimer(completed){
-  clearInterval(T.tid);T.run=false;
-  const el=T.dur-T.left;
-  const wasRest=T.rest;
-  kaStop(true);
-  if(!wasRest&&el>=60){
-    const purity=Math.max(40,100-T.ints*15);
-    S.focus.push({id:uid(),day:dayKey(),ts:T.startTs||Date.now(),min:el/60,ints:T.ints,purity,done:!!completed});
-    save('focus');
-    toast(completed?('🎉 专注完成 '+fmtMin(el/60)+' · 纯度 '+purity+'%'):'已记录本次专注');
-  }
-  LS.del('timer');
-  if(wasRest){
-    resetTimer(T.focusDur||T.dur);
-    toast('☕ 休息结束,回来继续吧');
-  }else{
-    resetTimer(T.dur);
-    if(completed){showRestDone();maybePop(0.45)}
-    else if(el<60)toast('本次专注不足 1 分钟,未计入记录');
-  }
-  renderTab(ui.tab);
-}
-function resetTimer(sec){T.dur=sec;T.left=sec;T.run=false;T.rest=false;T.ints=0;T.breaks=0;T.startTs=0;T.focusDur=sec;clearInterval(T.tid);LS.del('timer');renderTimer()}
-function showRest(){
-  T.run=false;clearInterval(T.tid);
-  try{$('#ka').pause()}catch(e){}
-  persistTimer();
-  const b=$('#restBanner');b.hidden=false;
-  b.innerHTML=`<b>🫖 已连续专注 ${60*(T.breaks)} 分钟</b>站起来活动 3 分钟,接杯水,看看远处再回来——身体是刷题的本钱。
-    <div class="rowbtns" style="margin-top:9px">
-    <button class="btn-main sm" data-act="rest3">休息 3 分钟</button>
-    <button class="btn-ghost" data-act="rest-skip">继续专注</button></div>`;
-  renderTimer();
-}
-function showRestDone(){
-  const b=$('#restBanner');b.hidden=false;
-  b.innerHTML=`<b>🎉 本轮专注完成!</b>休息 5 分钟吧——站起来、远眺、转转脖子。
-    <div class="rowbtns" style="margin-top:9px">
-    <button class="btn-main sm" data-act="rest5">休息 5 分钟</button>
-    <button class="btn-ghost" data-act="rest-clear">好的</button></div>`;
-}
-function startBreak(sec){
-  T.focusDur=T.dur;          // 记住专注时长,休息结束后恢复
-  T.rest=true;T.dur=sec;T.left=sec;T.ints=0;T.breaks=0;T.startTs=0;T.run=false;
-  kaStop(true);
-  $('#restBanner').hidden=true;
-  T.endAt=Date.now()+sec*1000;T.run=true;
-  clearInterval(T.tid);T.tid=setInterval(timerTick,250);renderTimer();
+function applyRating(k){
+  const pend=window._pendFocus;closeSheet();
+  if(!pend)return;window._pendFocus=null;
+  const rt=RATING[k]||RATING.calm;
+  const min=pend.elSec/60,units=Math.floor(min/25);
+  const candy=units*rt.c;
+  S.focus.push({id:uid(),day:dayKey(),ts:T.startTs||Date.now()-pend.elSec*1000,min,ints:T.ints,
+    rating:{k,e:rt.e,l:rt.l},candy});
+  save('focus');
+  if(candy>0)addCandy(candy,'专注评分 · '+rt.l);
+  toast(rt.e+' '+rt.l+' · 已记录'+(candy?(' · +'+candy+' 🍬'):''));
+  T.startTs=0;T.ints=0;LS.del('timer');
+  maybePop(0.45);renderTab(ui.tab);
 }
 function renderFocus(){
-  renderTimer();
   const k=dayKey();
   const today=S.focus.filter(f=>f.day===k).reduce((a,f)=>a+f.min,0);
-  $('#todayFocusLine').innerHTML='今日累计专注 <b>'+fmtMin(today)+'</b>'+(today>=120?' · 已经很棒了,注意休息 💜':'');
+  const card=$('#focusCard');
+  if(T.run){
+    card.innerHTML=`<h3>🌱 专注打卡</h3>
+      <div class="focusLive"><div class="breath">🌟</div>
+      <b>专注中</b>
+      <div class="mut small">${hm(T.startTs)} 开始 · 已经悄悄帮你记着,安心去学习吧</div>
+      <div class="mut small">${S.settings.keepAlive?'锁屏上也会显示「专注中」':'(锁屏显示已在设置中关闭)'}</div>
+      <button class="btn-main" data-act="focus-end" style="max-width:260px;margin:14px auto 0;display:block">回来了 · 结束打卡</button></div>`;
+  }else{
+    card.innerHTML=`<h3>🌱 专注打卡</h3>
+      <div class="focusLive"><div class="breath idle">📚</div>
+      <b>准备好了就开始</b>
+      <div class="mut small">点开始记下时间,然后放下手机;回来打卡就好——不盯着倒计时,专注才属于你</div>
+      <button class="btn-main" data-act="focus-start" style="max-width:260px;margin:14px auto 0;display:block">开始专注</button></div>`;
+  }
+  $('#todayFocusLine').innerHTML='今日已记录 <b>'+fmtMin(today)+'</b>'+(today>=120?' · 已经很棒了,去休息吧 💜':'');
   const list=[...S.focus].sort((a,b)=>b.ts-a.ts).slice(0,10);
-  $('#focusList').innerHTML=list.length?list.map(f=>`
-    <div class="sessRow"><span>${esc(f.day)} ${hm(f.ts)}</span>
-    <span class="sm">${fmtMin(f.min)} · 中断${f.ints}次</span>
-    <span class="chip ${f.purity>=85?'ok':f.purity>=60?'':'warn'}">纯度 ${f.purity}%</span></div>`).join('')
-    :'<div class="empty">还没有专注记录,开始第一段 25 分钟吧</div>';
+  $('#focusList').innerHTML=list.length?list.map(f=>{
+    const rt=f.rating?RATING[f.rating.k]:null;
+    const tag=rt?`<span class="chip ${f.rating.k==='best'?'ok':(f.rating.k==='anxious'||f.rating.k==='fear')?'warn':'pink'}">${rt.e} ${rt.l}</span>`
+      :(f.purity?`<span class="chip">纯度 ${f.purity}%</span>`:'<span class="chip gray">未评分</span>');
+    return `<div class="sessRow"><span>${esc(f.day)} ${hm(f.ts)}</span>
+    <span class="sm">${fmtMin(f.min)}${f.ints?(' · 中断'+f.ints+'次'):''}</span>${tag}
+    ${f.candy?`<span class="chip ok">+${f.candy}🍬</span>`:''}</div>`}).join('')
+    :'<div class="empty">还没有专注记录——不需要完美的一天,先开始 10 分钟 💜</div>';
 }
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){T.hiddenAt=Date.now()}
   else if(T.run&&T.hiddenAt&&Date.now()-T.hiddenAt>5000){
-    T.ints++;toast('⚠️ 检测到离开,专注纯度已扣分');renderTimer();
+    T.ints++;persistTimer();
   }});
 
 /* ================= 笔记 ================= */
@@ -1227,7 +1233,7 @@ function renderNotes(){
 function noteHTML(n,c){
   return `<div class="noteItem"><div class="nt">${esc(n.text)}</div>
   <div class="nm"><span>${c.icon} ${esc(c.name)}</span>
-  <span>${new Date(n.ts).getFullYear()!==new Date().getFullYear()?new Date(n.ts).toLocaleDateString('zh-CN')+( ' '+hm(n.ts)):hm(n.ts)}</span>
+  <span>${fmtFull(n.ts)}</span>
   <button class="delx" data-act="note-del" data-cat="${c.id}" data-id="${n.id}" aria-label="删除">✕</button></div></div>`;
 }
 function addNote(){
@@ -1245,12 +1251,119 @@ function renameCat(){
   $('#rnForm').onsubmit=e=>{e.preventDefault();
     cur.name=$('#rnName').value.trim()||cur.name;save('cats');stampSync('cats');closeSheet();renderNotes();renderPlans();toast('已重命名')}}
 
-/* ================= 计划(双线时间轴) ================= */
+/* ================= 计划(双线时间轴 + 节奏视图 + 四宫格) ================= */
+const DEF_QUADS=[{id:'q1',name:'重要 · 优先攻坚'},{id:'q2',name:'常规 · 细水长流'},
+  {id:'q3',name:'紧急 · 速战速决'},{id:'q4',name:'灵活 · 见缝插针'}];
+if(!S.quads||!S.quads.length){S.quads=LS.get('quads',DEF_QUADS);LS.set('quads',S.quads)}
+/* 小折线图助手 */
+function polyChart(labels,series,opts){
+  opts=opts||{};const W=opts.w||330,H=opts.h||128,L=24,R=6,T=10,B=18;
+  const iw=W-L-R,ih=H-T-B;
+  let maxV=1;series.forEach(s=>s.v.forEach(v=>{if(v>maxV)maxV=v}));
+  const n=labels.length;
+  const X=i=>n<=1?L+iw/2:L+i*iw/Math.max(1,n-1);
+  const Y=v=>T+ih-(v/maxV)*ih;
+  let out='<svg viewBox="0 0 '+W+' '+H+'">';
+  [1,2].forEach(g=>{const y=(T+ih*g/3).toFixed(1);
+    out+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="rgba(143,118,173,.14)" stroke-width="1"/>'});
+  labels.forEach((lb,i)=>{if(n>8&&i%2)return;
+    out+='<text x="'+X(i).toFixed(1)+'" y="'+(H-5)+'" font-size="8.5" fill="#8A8089" text-anchor="middle">'+esc(lb)+'</text>'});
+  series.forEach(s=>{
+    const pts=s.v.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+    out+='<polyline points="'+pts+'" fill="none" stroke="'+s.c+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'+(s.dash?' stroke-dasharray="4 3"':'')+'/>';
+    s.v.forEach((v,i)=>{out+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="2.3" fill="'+s.c+'"/>'})});
+  return '<div class="chartWrap">'+out+'</svg></div>';
+}
+const MOOD_SCORE={'😄':5,'🥳':5,'💪':5,'✨':5,'😇':4,'🙂':4,'🤤':4,'😐':3,
+  '😴':2.5,'🫠':2.5,'😫':2,'😢':2,'😡':2,'🥵':1,'🤯':1};
+function segOf(ts){const h=new Date(ts).getHours();return h<5?'晚':h<12?'上午':h<18?'下午':'晚上'}
+function renderRhythm(){
+  const k=dayKey();
+  // 图一:本月旬节奏(计划 vs 完成,十天一节点)
+  const ym=k.slice(0,7),dim=new Date(+k.slice(0,4),(+k.slice(5,7)),0).getDate();
+  const spans=[['上旬',1,10],['中旬',11,20],['下旬',21,dim]];
+  const planned=[],doneArr=[],xlab=[];
+  spans.forEach(([nm,a,b])=>{xlab.push(nm);
+    const inR=S.plansS.filter(p=>p.due&&p.due.slice(0,7)===ym&&+p.due.slice(8)>=a&&+p.due.slice(8)<=b);
+    planned.push(inR.length);doneArr.push(inR.filter(p=>p.done).length)});
+  const c1=polyChart(xlab,[
+    {v:planned,c:'#9A7FBC',dash:true},{v:doneArr,c:'#C08CA4'}]);
+  // 图二:近 7 天专注时段(上午/下午/晚上)
+  const am=[],pm=[],ev=[],xl=[];
+  for(let i=6;i>=0;i--){const d=addDays(k,-i);xl.push(d.slice(5));
+    let a=0,p=0,e=0;
+    S.focus.forEach(f=>{if(f.day!==d)return;
+      if(segOf(f.ts)==='上午')a+=f.min;else if(segOf(f.ts)==='下午')p+=f.min;else e+=f.min});
+    am.push(Math.round(a));pm.push(Math.round(p));ev.push(Math.round(e))}
+  const c2=polyChart(xl,[{v:am,c:'#C9A227'},{v:pm,c:'#9A7FBC'},{v:ev,c:'#C08CA4'}]);
+  $('#rhythmBody').innerHTML=
+    '<div style="margin-bottom:4px"><b style="font-size:13px">旬节奏 · 本月任务</b> '+
+    '<span class="mut small"><i style="display:inline-block;width:14px;height:3px;background:#9A7FBC;vertical-align:middle"></i> 计划 <i style="display:inline-block;width:14px;height:3px;background:#C08CA4;vertical-align:middle"></i> 完成</span></div>'+c1+
+    '<div style="margin:10px 0 4px"><b style="font-size:13px">时段节奏 · 近 7 天专注(分钟)</b> '+
+    '<span class="mut small"><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#C9A227;vertical-align:middle"></i>上午 <i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#9A7FBC;vertical-align:middle"></i>下午 <i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#C08CA4;vertical-align:middle"></i>晚上</span></div>'+c2+
+    '<div class="mut small" style="margin-top:6px">看见节奏,比追赶进度更接近坚持本身。</div>';
+}
+function renderQuads(){
+  const k=dayKey();
+  $('#psQuad').innerHTML=S.quads.map(q=>`<option value="${q.id}">${esc(q.name)}</option>`).join('');
+  $('#quadGrid').innerHTML=S.quads.map((q,i)=>{
+    const ts=S.plansS.filter(p=>(p.qid||'q1')===q.id&&!p.done);
+    const dn=S.plansS.filter(p=>(p.qid||'q1')===q.id&&p.done).length;
+    const today=ts.filter(p=>p.due===k).length;
+    return `<div class="qcell" data-act="quad-open" data-id="${q.id}">
+      <b>${['Ⅰ','Ⅱ','Ⅲ','Ⅳ'][i]||'·'} ${esc(q.name)}<span class="qn">${ts.length}</span></b>
+      <div class="qi">今天到期 ${today} · 已完成 ${dn}${ts.length?(' · 最近:'+esc(ts.sort((a,b)=>a.due<b.due?-1:1)[0].title.slice(0,12))):''}</div></div>`}).join('');
+}
+function openQuad(id){
+  const q=S.quads.find(x=>x.id===id);if(!q)return;
+  const ts=S.plansS.filter(p=>(p.qid||'q1')===id).sort((a,b)=>(a.done-b.done)||(a.due<b.due?-1:1));
+  openSheet('宫格:'+q.name,`
+    <form id="quadRnForm"><div class="frow"><label>重命名宫格</label>
+      <input type="text" id="quadName" maxlength="14" value="${esc(q.name)}" required></div>
+      <button class="btn-main sm" type="submit">保存名称</button></form>
+    <hr class="hr">
+    <div class="mut small" style="margin-bottom:6px">这个宫格里的任务</div>
+    ${ts.length?ts.map(p=>`<div class="psRow">
+      <button class="cbx ${p.done?'done':''}" data-act="planS-toggle" data-id="${p.id}">✓</button>
+      <span class="tt ${p.done?'done':''}">${esc(p.title)}</span>
+      <span class="due">${esc(p.due)}</span></div>`).join(''):'<div class="empty">还没有任务放进这个宫格</div>'}`);
+  $('#quadRnForm').onsubmit=e=>{e.preventDefault();
+    q.name=$('#quadName').value.trim()||q.name;LS.set('quads',S.quads);stampSync('cats');
+    closeSheet();renderPlans();toast('宫格已重命名')};
+}
+/* 温柔战报:长期目标完成时,一句话肯定 + 本周期最难忘的瞬间 */
+function openReport(p){
+  const inPeriod=day=>day>=p.start&&day<=p.end;
+  const cks=S.checkins.filter(c=>inPeriod(c.day));
+  const fs=S.focus.filter(f=>inPeriod(f.day));
+  const fmin=fs.reduce((a,f)=>a+f.min,0);
+  const days=Math.max(1,diffDays(p.start,p.end)+1);
+  // 挑一个"最值得记住的瞬间"
+  let mom='这段日子里,你一次次把自己带回了座位——这本身就很动人。';
+  const capPhoto=PHOTOS.filter(x=>inPeriod(x.day)&&x.cap).sort((a,b)=>b.ts-a.ts)[0];
+  const photo=capPhoto||PHOTOS.filter(x=>inPeriod(x.day)).sort((a,b)=>b.ts-a.ts)[0];
+  const longF=[...fs].sort((a,b)=>b.min-a.min)[0];
+  if(capPhoto)mom=capPhoto.day+' '+hm(capPhoto.ts)+',你为一张照片写下:「'+capPhoto.cap+'」';
+  else if(longF)mom=longF.day+' '+hm(longF.ts)+',一段 '+fmtMin(longF.min)+' 的专注,只有你自己知道有多安静';
+  else if(photo)mom=photo.day+' '+hm(photo.ts)+',你举起手机,留住了自习桌上的一刻';
+  const sen=`「${esc(p.title)}」走完了。这 ${days} 天里,你坐进座位 ${cks.length} 次,专注了 ${fmtMin(fmin)}。比数字更重要的是——你没有把这件事交给心情,而是交给了每一个具体的清晨与夜晚。这样的你,值得一句认真的:辛苦了,也恭喜。`;
+  window._rm={p,sen,mom};
+  openSheet('💌 你的温柔战报',`
+    <div class="reportCard">
+      <div class="rgreet">${sen}</div>
+      <div class="rmoment">💫 本周期最值得记住的瞬间<br>${esc(mom)}</div>
+      <div class="rmeta">${p.start} ~ ${p.end} · LibPass 温柔战报</div>
+    </div>
+    <div class="frow" style="margin-top:14px"><label>换一个瞬间?自己写也可以</label>
+      <input type="text" id="rmInput" maxlength="80" value="${esc(mom)}"></div>
+    <button class="btn-main" data-act="report-save">收进战报册</button>
+    <button class="btn-ghost" data-act="sheet-close" style="margin-left:8px">先不留</button>`);
+}
 function renderPlans(){
   // 长期:甘特双线
   const g=$('#gantt');
   if(!S.plansL.length){
-    g.innerHTML='<div class="empty">还没有长期目标。比如:「行测一轮复习 10-10 ~ 12-20」</div>';
+    g.innerHTML='<div class="empty">还没有长期目标。比如:「行测一轮复习 10-10 ~ 12-20」<br><span class="mut small">完成时,会长出一张属于你的温柔战报 💌</span></div>';
   }else{
     let lo=S.plansL.map(p=>p.start).reduce((a,b)=>a<b?a:b),hi=S.plansL.map(p=>p.end).reduce((a,b)=>a>b?a:b);
     lo=addDays(lo,-5);hi=addDays(hi,5);
@@ -1266,23 +1379,27 @@ function renderPlans(){
         <button class="delx" data-act="planL-del" data-id="${p.id}">✕</button></div>
         <div class="gtrack"><i class="${p.done?'done':''}" style="left:${l}%;width:${w}%"></i></div></div>`}).join('');
     g.innerHTML=`<div class="gantt"><div class="gtoday" style="left:${todayP}%"></div>${rows}</div>
-    <div class="mut small" style="margin-top:8px">竖线为今天 · 点左侧圆圈标记完成</div>`;
+    <div class="mut small" style="margin-top:8px">竖线为今天 · 点圆圈标记完成,会收到一张温柔战报 💌</div>`;
   }
-  // 短期
+  // 短期任务清单
   const list=[...S.plansS].sort((a,b)=>(a.done-b.done)||(a.due<b.due?-1:1));
   const k=dayKey();
   const all=S.plansS,dn=all.filter(p=>p.done).length;
   const pct=all.length?Math.round(dn/all.length*100):0;
+  const qcolor={q1:'#B0575F',q2:'#8F76AD',q3:'#C08CA4',q4:'#7C9A6A'};
   $('#planSStats').innerHTML=all.length?`<div class="mut small" style="margin-bottom:6px">完成率 ${dn}/${all.length}</div><div class="progWrap"><i style="width:${pct}%"></i></div>`:'';
   $('#planSList').innerHTML=list.length?list.map(p=>{
     const over=!p.done&&p.due<k;
+    const qc=qcolor[p.qid||'q1'];
     return `<div class="psRow">
+      <i style="flex:none;width:8px;height:8px;border-radius:3px;background:${qc}" title="${esc((S.quads.find(q=>q.id===(p.qid||'q1'))||{}).name||'')}"></i>
       <button class="cbx ${p.done?'done':''}" data-act="planS-toggle" data-id="${p.id}">✓</button>
       <span class="tt ${p.done?'done':''}">${esc(p.title)}</span>
       ${over?'<span class="chip warn">逾期</span><button class="btn-ghost" style="padding:4px 9px;font-size:12px" data-act="postpone" data-id="'+p.id+'">顺延</button>':''}
       <span class="due">${p.due===k?'今天':esc(p.due)}</span>
       <button class="delx" data-act="planS-del" data-id="${p.id}">✕</button></div>`}).join('')
     :'<div class="empty">还没有短期任务,添加一条今天的吧</div>';
+  renderRhythm();renderQuads();
 }
 
 /* ================= 地点管理 / 设置 ================= */
@@ -1334,7 +1451,7 @@ function openSettings(){
     <div class="frow"><label>目标考试名称</label><input type="text" id="setExamName" value="${esc(st.examName)}" maxlength="20"></div>
     <div class="frow"><label>考试日期(用于倒计时)</label><input type="date" id="setExamDate" value="${st.examDate||''}"></div>
     <div class="swrow"><span>🌙 深色模式</span><button class="sw ${st.theme==='dark'?'on':''}" data-act="set-theme" role="switch" aria-checked="${st.theme==='dark'}"></button></div>
-    <div class="swrow"><span>🖥️ 锁屏显示专注计时<br><span class="mut small">专注时后台轻声保活,熄屏也能看到剩余时长(设置→专注里可关闭音效干扰)</span></span><button class="sw ${st.keepAlive?'on':''}" data-act="set-keepalive"></button></div>
+    <div class="swrow"><span>🖥️ 锁屏显示专注状态<br><span class="mut small">专注时后台轻声保活,熄屏锁屏上显示「专注中」,时长照常记录</span></span><button class="sw ${st.keepAlive?'on':''}" data-act="set-keepalive"></button></div>
     <div class="swrow"><span>🔔 每日提醒<br><span class="mut small">到点提醒打卡(应用打开时有效)</span></span><button class="sw ${st.notifOn?'on':''}" data-act="set-notif"></button></div>
     <div class="frow" style="margin-top:10px"><label>提醒时间点</label>
       <div class="rowbtns">${[0,1,2].map(i=>`<input type="time" class="nfTime" value="${times[i]||''}" style="padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card2)">`).join('')}</div></div>
@@ -1399,7 +1516,7 @@ function download(name,blob){const a=document.createElement('a');a.href=URL.crea
 async function doExport(withPhotos){
   const data={v:1,exportedAt:new Date().toISOString(),
     settings:S.settings,locs:S.locs,checkins:S.checkins,moods:S.moods,
-    cats:S.cats,notes:S.notes,plansL:S.plansL,plansS:S.plansS,focus:S.focus,rewards:S.rewards};
+    cats:S.cats,notes:S.notes,plansL:S.plansL,plansS:S.plansS,focus:S.focus,rewards:S.rewards,reports:S.reports||[],quads:S.quads||DEF_QUADS};
   if(withPhotos)data.photos=PHOTOS;
   download('libpass-backup-'+dayKey()+'.json',new Blob([JSON.stringify(data)],{type:'application/json'}));
   toast('已导出备份文件')}
@@ -1409,8 +1526,9 @@ function doImport(file){
     const d=JSON.parse(r.result);
     if(!d||typeof d!=='object')throw new Error('格式错误');
     if(!confirm('导入将覆盖本机当前数据,继续吗?'))return;
-    const map=['settings','locs','checkins','moods','cats','notes','plansL','plansS','focus','rewards'];
-    for(const k of map)if(d[k]!=null){S[k]=d[k];LS.set(k,S[k])}
+    const map=['settings','locs','checkins','moods','cats','notes','plansL','plansS','focus','rewards','reports'];
+    for(const key of map)if(d[key]!=null){S[key]=d[key];LS.set(key,S[key])}
+    if(d.quads){S.quads=d.quads;LS.set('quads',S.quads)}
     const put=(d.photos||[]).map(p=>idbPut(p));
     Promise.all(put).then(()=>{toast('✅ 导入完成,即将刷新');setTimeout(()=>location.reload(),900)});
   }catch(e){toast('导入失败:'+e.message)}};
@@ -1492,16 +1610,54 @@ function addCoins(n,label){R.coins+=n;R.coinsTotal+=n;txLog(label,'+'+n+' 🪙')
 function totalFocusMin(){return S.focus.reduce((a,f)=>a+f.min,0)}
 function availCk(){return Math.max(0,S.checkins.length-R.exCk)}
 function availMin(){return Math.max(0,Math.floor(totalFocusMin()-R.exMin))}
+/* --- 情绪主题盲盒系列:当日心情决定开出哪一组小球 --- */
+const SERIES={
+ courage:{name:'勇气动物系列',theme:'不安的日子,它来陪你',ors:[['🦁','勇气狮'],['🐺','坚持狼'],['🦅','远见鹰'],['🐘','沉稳象'],['🦊','机智狐'],['🐻','抱抱熊']]},
+ moon:{name:'月光系列',theme:'平静的日子,慢慢发光',ors:[['🌙','弦月'],['🌕','满月'],['⭐','启明星'],['☄️','流星'],['🌌','银河'],['🪐','土星环']]},
+ sunny:{name:'阳光水果系列',theme:'元气的日子,甜甜的',ors:[['🍊','活力橙'],['🍓','甜心莓'],['🍋','清醒柠'],['🍇','智慧葡'],['🍑','温柔桃'],['🍍','坚持菠']]},
+ plant:{name:'治愈植物系列',theme:'疲惫的日子,先歇一歇',ors:[['🌵','倔强仙人掌'],['🌿','新生嫩芽'],['🍀','四叶草'],['🌻','向阳花'],['🌱','破土种子'],['🪴','静默盆栽']]},
+ magic:{name:'神秘魔法系列',theme:'平常的日子,也有奇迹',ors:[['🔮','预言球'],['🪄','魔杖'],['🕯️','许愿烛'],['🗝️','古老钥匙'],['📜','秘卷'],['💎','能量水晶']]}
+};
+const MOOD2SERIES={'😫':'plant','😴':'plant','🥵':'plant','🫠':'plant','😢':'courage','😡':'courage','🤯':'courage',
+ '🥳':'sunny','😄':'sunny','💪':'sunny','✨':'sunny','🙂':'moon','😇':'moon','🤤':'moon'};
+/* --- 星座:集齐对应科目考点卡点亮;双鱼座由情绪花园点亮;每月最多点亮一个 --- */
+const CONSTELLATIONS=[
+ {id:'aries',name:'白羊座 · 法理之光',cards:['k8','k9'],star:'♈'},
+ {id:'taurus',name:'金牛座 · 民法之基',cards:['k1','k2','k3'],star:'♉'},
+ {id:'gemini',name:'双子座 · 民诉之辩',cards:['k7'],star:'♊'},
+ {id:'cancer',name:'巨蟹座 · 刑法之盾',cards:['k4','k5'],star:'♋'},
+ {id:'leo',name:'狮子座 · 刑诉之序',cards:['k6'],star:'♌'},
+ {id:'virgo',name:'处女座 · 商法之精',cards:['k10'],star:'♍'},
+ {id:'libra',name:'天秤座 · 宪法之衡',cards:['k17'],star:'♎'},
+ {id:'scorpio',name:'天蝎座 · 行政法之界',cards:['k18'],star:'♏'},
+ {id:'sagittarius',name:'射手座 · 资料分析之箭',cards:['k11'],star:'♐'},
+ {id:'capricorn',name:'摩羯座 · 判断推理之梯',cards:['k12','k13'],star:'♑'},
+ {id:'aquarius',name:'水瓶座 · 申论之泉',cards:['k14','k15','k16'],star:'♒'},
+ {id:'pisces',name:'双鱼座 · 初心之梦',byGarden:true,star:'♓'}
+];
+const BOX_PRICE=60,BOX_PER_DAY=2,GARDEN_COST=12;
+function todaySeries(){
+  const m=S.moods.find(x=>x.day===dayKey());
+  return (m&&MOOD2SERIES[m.e])||'magic'}
+function orbTotal(){return Object.values(R.orbs).reduce((a,arr)=>a+arr.length,0)}
+function dayBoxLeft(){
+  const k=dayKey();
+  if(R.dayBoxes.day!==k){R.dayBoxes={day:k,n:0}}
+  return Math.max(0,BOX_PER_DAY-R.dayBoxes.n)}
 function rollReward(){
   const r=Math.random();
-  if(r<0.14){
+  if(r<0.24){
     const un=CARDS.filter(c=>!R.cards.includes(c.id));
-    const pool=un.length?un:CARDS;
-    const c=pool[Math.floor(Math.random()*pool.length)];
-    return{type:'card',card:c,fresh:!R.cards.includes(c.id)};
+    if(un.length){const c=un[Math.floor(Math.random()*un.length)];return{type:'card',card:c}}
   }
-  if(r<0.55)return{type:'candy',n:5+Math.floor(Math.random()*16)};
-  if(r<0.97)return{type:'coins',n:5+Math.floor(Math.random()*46)};
+  if(r<0.62){ // 情绪小球(按当日心情定系列;集满则折金币)
+    const sk=todaySeries(),own=R.orbs[sk]||[],all=SERIES[sk].ors;
+    const left=all.map((o,i)=>i).filter(i=>!own.includes(i));
+    if(left.length)return{type:'orb',sk,oi:left[Math.floor(Math.random()*left.length)],fresh:true};
+    return{type:'coins',n:12+Math.floor(Math.random()*20)};
+  }
+  if(r<0.82)return{type:'candy',n:5+Math.floor(Math.random()*12)};
+  if(r<0.97)return{type:'coins',n:5+Math.floor(Math.random()*36)};
   return{type:'coins',n:88,jackpot:true};
 }
 function showBox(){
@@ -1513,17 +1669,22 @@ function showBox(){
 function openBoxAnim(){
   if(pendingReward)return;
   const be=$('#boxEmoji');be.classList.add('opening');
+  const sk=todaySeries();
+  $('#boxHint').textContent=SERIES[sk].name+' · '+SERIES[sk].theme;
   setTimeout(()=>{
     pendingReward=rollReward();
     be.classList.add('gone');
     const rv=$('#boxReveal');
     if(pendingReward.type==='candy'){
-      rv.innerHTML='<div class="rEmo">🍬</div><div class="rTitle">甜蜜糖果!</div><div class="rText">开出了 <b>'+pendingReward.n+'</b> 颗糖果,甜度达标,继续加油~</div><button class="btn-main sm" data-act="box-collect">收下</button>';
+      rv.innerHTML='<div class="rEmo">🍬</div><div class="rTitle">甜蜜糖果!</div><div class="rText">开出了 <b>'+pendingReward.n+'</b> 颗糖果——甜一下,再出发</div><button class="btn-main sm" data-act="box-collect">收下</button>';
     }else if(pendingReward.type==='coins'){
       rv.innerHTML='<div class="rEmo">'+(pendingReward.jackpot?'✨🪙':'🪙')+'</div><div class="rTitle">'+(pendingReward.jackpot?'欧气爆棚!':'金币入账!')+'</div><div class="rText">+'+pendingReward.n+' 金币已自动存入你的金币银行 🏦</div><button class="btn-main sm" data-act="box-collect">收下</button>';
+    }else if(pendingReward.type==='orb'){
+      const o=SERIES[sk].ors[pendingReward.oi];
+      rv.innerHTML='<div class="rEmo">'+o[0]+'</div><div class="rTitle">'+o[1]+' · '+SERIES[sk].name+'</div><div class="rText">它回应了你今天的心情,已经种进情绪花园 🌷</div><button class="btn-main sm" data-act="box-collect">收下</button>';
     }else{
       const c=pendingReward.card;
-      rv.innerHTML='<div class="rEmo">'+c.e+'</div><div class="rTitle">稀有考点卡 · '+c.s+'</div><div class="rText">'+esc(c.t)+'<br><span class="'+(pendingReward.fresh?'chip ok':'chip gray')+'" style="margin-top:8px">'+(pendingReward.fresh?'NEW · 已收入卡册':'重复卡 · 自动换成 5 🪙')+'</span></div><button class="btn-main sm" data-act="box-collect">收下</button>';
+      rv.innerHTML='<div class="rEmo">'+c.e+'</div><div class="rTitle">稀有考点卡 · '+c.s+'</div><div class="rText">'+esc(c.t)+'<br><span class="chip ok" style="margin-top:8px">NEW · 已收入卡册</span></div><button class="btn-main sm" data-act="box-collect">收下</button>';
     }
     rv.classList.add('show');
     $('#boxHint').textContent='恭喜!';
@@ -1534,49 +1695,130 @@ function collectBox(){
   const p=pendingReward;pendingReward=null;
   if(p.type==='candy')addCandy(p.n,'盲盒开出');
   else if(p.type==='coins')addCoins(p.n,'盲盒开出');
+  else if(p.type==='orb'){
+    (R.orbs[p.sk]=R.orbs[p.sk]||[]).push(p.oi);
+    txLog('收入 '+SERIES[p.sk].ors[p.oi][1],'🌱');}
   else{const c=p.card;
-    if(p.fresh&&!R.cards.includes(c.id)){R.cards.push(c.id);txLog('收录考点卡 · '+c.s,'🗂️')}
-    else addCoins(5,'重复卡转换');}
-  R.boxes++;saveR();
+    if(!R.cards.includes(c.id)){R.cards.push(c.id);txLog('收录考点卡 · '+c.s,'🗂️');
+      setTimeout(checkConstellations,400)}}
+  R.boxes++;R.dayBoxes.n++;saveR();
   $('#boxOverlay').hidden=true;
   toast('奖励已入账 🌟');
   if(ui.tab==='rewards')renderRewards();else renderHeader();
 }
 function maybePop(chance){
-  const k=dayKey();
-  if(R.popsDay!==k){R.popsDay=k;R.pops=0}
-  if(R.pops>=3)return;
-  if(Math.random()<chance){R.pops++;saveR();setTimeout(showBox,900)}
+  if(dayBoxLeft()<=0)return;
+  if(Math.random()<chance)setTimeout(showBox,900);
+}
+/* --- 星座解锁:集齐科目考点卡(双鱼座=合成一次情绪花园);每月最多点亮一个 --- */
+function consEligible(c){
+  if(c.byGarden)return R.gardens.length>0;
+  return c.cards.length>0&&c.cards.every(id=>R.cards.includes(id))}
+function canUnlockNow(){return !R.lastConsAt||Date.now()-R.lastConsAt>=30*864e5}
+function checkConstellations(){
+  // 先处理等待中的(满 30 天即点亮)
+  for(let i=R.pendingCons.length-1;i>=0;i--){
+    if(canUnlockNow()){const id=R.pendingCons.splice(i,1)[0];
+      R.constellations[id]=Date.now();R.lastConsAt=Date.now();
+      const c=CONSTELLATIONS.find(x=>x.id===id);
+      if(c)toast(c.star+' 点亮星座:'+c.name)}}
+  // 新满足条件的:能点则点,否则排队
+  CONSTELLATIONS.forEach(c=>{
+    if(R.constellations[c.id]||R.pendingCons.includes(c.id))return;
+    if(!consEligible(c))return;
+    if(canUnlockNow()){R.constellations[c.id]=Date.now();R.lastConsAt=Date.now();
+      toast(c.star+' 点亮星座:'+c.name)}
+    else R.pendingCons.push(c.id)});
+  if(R.pendingCons.length)toast('又有星座在等下一个月圆之夜 ✨');
+  saveR();
+}
+/* --- 情绪花园:集 12 颗小球合成一座 --- */
+const GARDEN_FLOWERS=['🌷','🌸','🌹','🌺','🌻','🌼','🪷'];
+function synthGarden(){
+  let need=GARDEN_COST;
+  const take={};
+  for(const sk of Object.keys(R.orbs)){
+    while(need>0&&R.orbs[sk].length>0){(take[sk]=take[sk]||[]).push(R.orbs[sk].pop());need--}}
+  if(need>0){toast('小球还不够,先去开两个盲盒吧');return}
+  const fl=[...GARDEN_FLOWERS].sort(()=>Math.random()-.5).slice(0,4+Math.min(3,R.gardens.length));
+  R.gardens.push({id:uid(),ts:Date.now(),flowers:fl,from:Object.keys(take).map(sk=>SERIES[sk].name)});
+  txLog('合成情绪花园 ×1','🌷');saveR();
+  toast('🌷 一座新的情绪花园开花了');
+  checkConstellations();renderRewards();
 }
 function renderRewards(){
-  const k=dayKey();
+  const k=dayKey(),sk=todaySeries();
+  const mood=S.moods.find(m=>m.day===k);
+  const consN=Object.keys(R.constellations).length;
   $('#walletCard').innerHTML='<div class="wEmo">🌟</div><div style="flex:1;min-width:0">'+
     '<div class="walletNum">🍬 '+R.candy+'&nbsp;&nbsp;🪙 '+R.coins+'</div>'+
-    '<div class="walletSub">打卡和专注都会变成奖励 · 已开 '+R.boxes+' 个盲盒 · 收录 '+R.cards.length+'/'+CARDS.length+' 张考点卡</div></div>';
-  const ck=availCk(),units=Math.floor(availMin()/25);
+    '<div class="walletSub">今日盲盒 '+R.dayBoxes.n+'/'+BOX_PER_DAY+' · 考点卡 '+R.cards.length+'/'+CARDS.length+' · 星座 '+consN+'/12 · 小球 '+orbTotal()+'</div></div>';
+  const ck=availCk();
   $('#exBody').innerHTML=
     '<div class="exRow"><span class="emo">🏛️</span><div class="info"><b>打卡兑换</b><br><span class="mut small">每次打卡 = 10 🍬 · 现在可兑 '+ck+' 次</span></div>'+
     '<button class="btn-main sm" data-act="ex-ck" '+(ck?'':'disabled')+'>兑换</button></div>'+
-    '<div class="exRow"><span class="emo">⏳</span><div class="info"><b>专注兑换</b><br><span class="mut small">每 25 分钟 = 10 🍬 · 现在可兑 '+units+' 份(余 '+availMin()+' 分钟)</span></div>'+
-    '<button class="btn-main sm" data-act="ex-min" '+(units?'':'disabled')+'>兑换</button></div>'+
-    '<div class="mut small" style="margin-top:9px">糖果可以开盲盒;盲盒里可能开出金币和稀有考点卡。</div>';
+    '<div class="exRow"><span class="emo">😇</span><div class="info"><b>专注自评奖励</b><br><span class="mut small">每 25 分钟按自评换糖:最佳12 · 平和10 · 分神8 · 焦虑/恐惧6</span></div>'+
+    '<span class="chip pink">结束打卡即发放</span></div>'+
+    '<div class="mut small" style="margin-top:9px">诚实的评分换来真实的糖果——焦虑的日子也值得被肯定。</div>';
   const free=R.freeDay===k;
+  const left=dayBoxLeft();
   $('#boxBody').innerHTML='<div class="boxBig"><div class="bEmo">🎁</div>'+
-    '<div class="mut small">每 30 🍬 开一个 · 打卡/专注后也可能随机弹出免费盲盒</div>'+
-    (free?'<button class="btn-ghost" disabled>今日免费盲盒已领 ✓</button>':'<button class="btn-main sm" data-act="box-free">领每日免费盲盒</button>')+
-    '<button class="btn-main sm" data-act="box-buy" '+(R.candy>=30?'':'disabled')+'>用 30 🍬 开一个</button></div>';
+    '<div class="mut small">今天的心情:'+(mood?(mood.e+' '+esc(mood.label||'')):'还没记录')+'<br>将开出 <b>'+SERIES[sk].name+'</b> · '+SERIES[sk].theme+'</div>'+
+    (left<=0?'<span class="chip gray">今天的 '+BOX_PER_DAY+' 个盲盒都开完啦,明天见 🌙</span>':
+    (free?'':'<button class="btn-main sm" data-act="box-free">领今日免费盲盒</button>')+
+    '<button class="btn-main sm" data-act="box-buy" '+(R.candy>=BOX_PRICE?'':'disabled')+'>用 '+BOX_PRICE+' 🍬 开一个</button>'+
+    '<div class="mut small" style="margin-top:6px">每日至多 '+BOX_PER_DAY+' 个 · 打卡/专注后也可能偶遇免费盒</div>')+'</div>';
+  /* 情绪花园 */
+  let orbHtml='';
+  for(const key of Object.keys(SERIES)){
+    const own=R.orbs[key]||[];
+    orbHtml+='<div style="margin-top:8px"><b style="font-size:12.5px">'+SERIES[key].name+'</b>'+
+      '<div class="orbRow">'+SERIES[key].ors.map((o,i)=>
+        '<span class="orbChip" style="'+(own.includes(i)?'':'opacity:.28;filter:grayscale(1)')+'" title="'+o[1]+'">'+o[0]+' '+o[1]+'</span>').join('')+'</div></div>'}
+  const gardens=R.gardens.map(g=>'<div style="margin-top:8px"><div class="gardenFlowers">'+g.flowers.join('')+'</div><div class="mut small">'+esc(dayKey(g.ts))+' · 由 '+g.from.join('+')+' 合成</div></div>').join('');
+  $('#gardenBody').innerHTML=orbHtml+
+    '<div class="rowbtns" style="margin-top:12px;justify-content:space-between">'+
+    '<span class="mut small">小球 '+orbTotal()+'/'+GARDEN_COST+' 可合成一座花园</span>'+
+    '<button class="btn-main sm" data-act="garden-synth" '+(orbTotal()>=GARDEN_COST?'':'disabled')+'>🌷 合成情绪花园</button></div>'+
+    (gardens?'<hr class="hr">'+gardens:'<div class="mut small" style="margin-top:8px">把心情收集起来,它会开花。</div>');
+  /* 金币银行 */
   $('#bankBody').innerHTML='<div class="statRow" style="margin-bottom:8px">'+
     '<div class="statBox"><b>'+R.coins+'</b><span>🪙 当前余额</span></div>'+
     '<div class="statBox"><b>'+R.coinsTotal+'</b><span>💰 累计存入</span></div>'+
     '<div class="statBox"><b>'+R.boxes+'</b><span>🎁 已开盲盒</span></div></div>'+
     (R.txs.length?R.txs.slice(0,6).map(t=>'<div class="txRow"><span>'+esc(dayKey(t.ts).slice(5))+' '+hm(t.ts)+'</span><span>'+esc(t.t)+'</span><b>'+esc(t.v)+'</b></div>').join(''):'<div class="empty">还没有流水,去打卡或开个盲盒吧</div>');
+  /* 星图 */
+  $('#starBody').innerHTML=starMapSVG()+
+    '<div class="orbRow" style="margin-top:10px">'+CONSTELLATIONS.map(c=>{
+      const on=R.constellations[c.id];
+      const pend=R.pendingCons.includes(c.id);
+      return '<span class="orbChip '+(on?'twinkle':'')+'" style="'+(on?'border-color:#B49BD3;background:rgba(180,155,211,.2);':'opacity:.35;')+'" title="'+c.name+(pend?'(排队中)':'')+'">'+c.star+'</span>'}).join('')+'</div>'+
+    '<div class="mut small" style="margin-top:8px">每颗小星是一次打卡 · 集齐一个科目的考点卡点亮一个星座,一个月最多点亮一个——一年走完十二星座 ✨'+(R.pendingCons.length?(' · 排队等待点亮:'+R.pendingCons.length):'')+'</div>';
+  /* 考点卡册 */
   $('#cardCount').textContent='已收集 '+R.cards.length+'/'+CARDS.length;
   const lastCard=R.cards[R.cards.length-1];
   $('#cardBody').innerHTML='<div class="cardGrid">'+CARDS.map(c=>{
     const own=R.cards.includes(c.id);
     return own?'<div class="kcard '+(c.id===lastCard?'fresh':'')+'"><span class="ks">'+c.e+' '+c.s+'</span><br>'+esc(c.t)+'</div>'
       :'<div class="kcard locked">🔒<br><span class="mut" style="font-size:11px">'+c.s+'</span></div>';
-  }).join('')+'</div>'+(R.cards.length<CARDS.length?'<div class="mut small" style="margin-top:9px">开盲盒有机会抽出未收录的考点卡,集齐全套!</div>':'<div class="chip ok" style="margin-top:9px">🎉 全集齐了,你就是行走的知识点!</div>');
+  }).join('')+'</div><div class="mut small" style="margin-top:9px">集齐一个科目的全部卡片,就能点亮星图上对应的星座 🌟</div>';
+}
+function starMapSVG(){
+  // 最近 45 天:每个打卡日点亮一颗小星,位置由日期哈希确定
+  const W=340,H=150,k=dayKey();
+  const lit=new Set(S.checkins.map(c=>c.day));
+  let dots='';
+  for(let i=44;i>=0;i--){
+    const d=addDays(k,-i);if(!lit.has(d))continue;
+    let h=0;for(const ch of d)h=(h*31+ch.charCodeAt(0))>>>0;
+    const x=12+(h%47)/47*(W-26),y=14+((h>>5)%41)/41*(H-30);
+    const big=(i===0);
+    dots+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(big?3.4:2)+'" fill="#EDE7F6" opacity="'+(big?1:.85)+'" class="twinkle" style="animation-delay:'+((h%30)/10)+'s"/>';
+  }
+  const streak=calcStreak().cur;
+  return '<div class="starMap" style="background:linear-gradient(160deg,#2E2740,#4A3B5C 55%,#5E4666)">'+
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice">'+dots+'</svg></div>'+
+    '<div class="mut small" style="margin-top:6px">星图已点亮 '+lit.size+' 天的星星 · 当前连续 '+streak+' 天 🔥</div>';
 }
 /* 闲时随机弹盲盒(每日最多 3 次) */
 setInterval(()=>{if(!document.hidden&&S.seen&&ui.tab&&Math.random()<.22)maybePop(1)},480000);
@@ -1592,7 +1834,7 @@ async function ghApi(method,path,body){
   return r.json()}
 function collectSync(){return {app:'libpass-sync',v:1,at:Date.now(),
   data:{checkins:S.checkins,moods:S.moods,cats:S.cats,notes:S.notes,plansL:S.plansL,plansS:S.plansS,
-        focus:S.focus,rewards:S.rewards,locs:S.locs,
+        focus:S.focus,rewards:S.rewards,locs:S.locs,reports:S.reports||[],quads:S.quads||DEF_QUADS,
         exam:{examName:S.settings.examName,examDate:S.settings.examDate,theme:S.settings.theme}},
   del:DELLOG}}
 function applyMerge(rd,remoteAt){
@@ -1607,7 +1849,7 @@ function applyMerge(rd,remoteAt){
     (rd.data[key]||[]).forEach(x=>{if(!x.id||map[x.id])return;if(alive(key,null,x.id,x.ts||0))map[x.id]=x});
     S[lname]=Object.values(map);LS.set(lname,S[lname])};
   union('checkins','checkins');union('focus','focus');
-  union('plansL','plansL');union('plansS','plansS');union('locs','locs');
+  union('plansL','plansL');union('plansS','plansS');union('locs','locs');union('reports','reports');
   // 3) 心态:按天,新者胜
   const mm={};S.moods.forEach(m=>mm[m.day]=m);
   (rd.data.moods||[]).forEach(m=>{if(!mm[m.day]||m.ts>mm[m.day].ts)mm[m.day]=m});
@@ -1624,6 +1866,7 @@ function applyMerge(rd,remoteAt){
     S.settings.examDate=rd.data.exam.examDate||'';S.settings.theme=rd.data.exam.theme||S.settings.theme;
     SYNCCFG.exam=remoteAt;LS.set('settings',S.settings)}
   if(remoteAt>(SYNCCFG.cats||0)&&rd.data.cats){S.cats=rd.data.cats;SYNCCFG.cats=remoteAt;LS.set('cats',S.cats)}
+  if(remoteAt>(SYNCCFG.quads||0)&&rd.data.quads){S.quads=rd.data.quads;SYNCCFG.quads=remoteAt;LS.set('quads',S.quads)}
   if(remoteAt>(SYNCCFG.rew||0)&&rd.data.rewards){S.rewards=rd.data.rewards;R=S.rewards;SYNCCFG.rew=remoteAt;LS.set('rewards',S.rewards)}
 }
 async function syncNow(){
@@ -1709,35 +1952,34 @@ document.addEventListener('click',e=>{
     case 'lb-close':$('#lightbox').hidden=true;break;
     case 'photo-del':(async()=>{await idbDel(id);PHOTOS=PHOTOS.filter(p=>p.id!==id);
       $('#lightbox').hidden=true;toast('已删除');renderToday();renderRecords()})();break;
+    case 'photo-cap':{(async()=>{const p=PHOTOS.find(x=>x.id===id);if(!p)return;
+      p.cap=$('#capInput')?$('#capInput').value.trim():'';await idbPut(p);
+      $('#lightbox').hidden=true;toast('📝 这句话已经和照片放在一起了');renderToday();renderRecords()})();break}
     case 'task-toggle':case 'planS-toggle':{
       const p=S.plansS.find(x=>x.id===id);if(p){p.done=!p.done;save('plansS');
         if(p.done)toast('✅ 完成!干得漂亮');renderTab(ui.tab)}break}
     case 'postpone':{
       const p=S.plansS.find(x=>x.id===id);if(p){p.due=dayKey();save('plansS');
         toast('已顺延到今天');renderTab(ui.tab)}break}
+    case 'quad-open':openQuad(id);break;
     case 'planL-toggle':{
-      const p=S.plansL.find(x=>x.id===id);if(p){p.done=!p.done;save('plansL');renderPlans()}break}
+      const p=S.plansL.find(x=>x.id===id);if(!p)break;
+      p.done=!p.done;save('plansL');renderPlans();
+      if(p.done)openReport(p);break}
+    case 'report-save':{const w=window._rm;if(!w)break;
+      const moment=$('#rmInput')?$('#rmInput').value.trim():'';
+      S.reports.push({id:uid(),planId:w.p.id,title:w.p.title,start:w.p.start,end:w.p.end,
+        sentence:w.sen,moment:moment||w.mom,ts:Date.now()});
+      save('reports');window._rm=null;closeSheet();
+      toast('💌 战报已收进册子');break}
     case 'planL-del':{if(confirm('删除这个长期目标?')){S.plansL=S.plansL.filter(x=>x.id!==id);tombstone('plansL',null,id);save('plansL');renderPlans()}break}
     case 'planS-del':{if(confirm('删除这个任务?')){S.plansS=S.plansS.filter(x=>x.id!==id);tombstone('plansS',null,id);save('plansS');renderTab(ui.tab)}break}
     case 'note-cat':ui.noteCat=id;ui.q='';$('#noteSearch').value='';renderNotes();break;
     case 'note-rename':renameCat();break;
     case 'note-del':{ if(confirm('删除这条笔记?')){S.notes[a.dataset.cat]=(S.notes[a.dataset.cat]||[]).filter(n=>n.id!==id);tombstone('notes',a.dataset.cat,id);save('notes');renderNotes()}break}
-    case 'preset':if(!T.run){resetTimer(+a.dataset.m*60)}break;
-    case 'preset-custom':{
-      if(T.run)break;
-      openSheet('自定义时长',`<form id="cmForm"><div class="frow"><label>专注分钟数(5-240)</label>
-        <input type="number" id="cmMin" min="5" max="240" value="${Math.round(T.dur/60)}" required></div>
-        <button class="btn-main" type="submit">确定</button></form>`);
-      $('#cmForm').onsubmit=ev=>{ev.preventDefault();
-        const m=Math.min(240,Math.max(5,+$('#cmMin').value||25));
-        resetTimer(m*60);closeSheet()};break}
-    case 'timer-start':if(T.rest&&T.left<=0){startBreak(180)}else timerStartPause();break;
-    case 'timer-stop':finishTimer(false);break;
-    case 'rest3':startBreak(180);break;
-    case 'rest5':startBreak(300);break;
-    case 'rest-skip':$('#restBanner').hidden=true;T.endAt=Date.now()+T.left*1000;T.run=true;
-      clearInterval(T.tid);T.tid=setInterval(timerTick,250);kaStart();persistTimer();renderTimer();break;
-    case 'rest-clear':$('#restBanner').hidden=true;break;
+    case 'focus-start':focusStart();break;
+    case 'focus-end':focusEnd();break;
+    case 'rate':applyRating(a.dataset.k);break;
     case 'open-settings':openSettings();break;
     case 'open-locs':openLocs();break;
     case 'sheet-close':closeSheet();break;
@@ -1750,14 +1992,14 @@ document.addEventListener('click',e=>{
     case 'watch-close':exitWatch();break;
     case 'ex-ck':{const n=availCk();if(!n)break;
       R.exCk+=n;addCandy(n*10,'打卡兑换 ×'+n);toast('🍬 兑换了 '+n*10+' 颗糖果');renderRewards();break}
-    case 'ex-min':{const units=Math.floor(availMin()/25);if(!units)break;
-      R.exMin+=units*25;addCandy(units*10,'专注兑换 '+units*25+' 分钟');toast('🍬 兑换了 '+units*10+' 颗糖果');renderRewards();break}
-    case 'box-free':{const k=dayKey();if(R.freeDay===k)break;
-      R.freeDay=k;saveR();showBox();break}
-    case 'box-buy':{if(R.candy<30)break;
-      R.candy-=30;txLog('开盲盒','-30 🍬');saveR();showBox();break}
+    case 'box-free':{const k2=dayKey();
+      if(R.freeDay===k2||dayBoxLeft()<=0)break;
+      R.freeDay=k2;saveR();showBox();break}
+    case 'box-buy':{if(R.candy<BOX_PRICE||dayBoxLeft()<=0)break;
+      R.candy-=BOX_PRICE;txLog('开盲盒','-'+BOX_PRICE+' 🍬');saveR();showBox();break}
     case 'box-open':openBoxAnim();break;
     case 'box-collect':collectBox();break;
+    case 'garden-synth':synthGarden();break;
     case 'set-autosync':{if(!SYNCCFG)break;
       SYNCCFG.auto=!SYNCCFG.auto;LS.set('syncCfg',SYNCCFG);
       a.classList.toggle('on',SYNCCFG.auto);break}
@@ -1792,8 +2034,9 @@ $('#planLForm').addEventListener('submit',e=>{e.preventDefault();
 $('#planSForm').addEventListener('submit',e=>{e.preventDefault();
   const title=$('#psTitle').value.trim(),due=$('#psDue').value;
   if(!title||!due)return;
-  S.plansS.push({id:uid(),title,due,done:false});
-  save('plansS');$('#psTitle').value='';renderPlans();toast('🗓️ 短期任务已添加')});
+  const qid=($('#psQuad')&&$('#psQuad').value)||'q1';
+  S.plansS.push({id:uid(),title,due,done:false,qid});
+  save('plansS');$('#psTitle').value='';renderPlans();toast('🗓️ 已放进宫格:『'+((S.quads.find(q=>q.id===qid)||{}).name||'')+'』')});
 
 /* ================= 手表视图 ================= */
 function enterWatch(){
@@ -1826,7 +2069,7 @@ function welcome(){
       📷🎭 — 拍照存档 + 表情记录每天的心态<br>
       📓 — 四个可重命名的分类笔记<br>
       🎯🗓️ — 长期目标 + 短期任务双线时间轴<br>
-      ⏳ — 专注计时,带纯度评分与分段休息<br>
+      ⏳ — 专注打卡:放下手机,回来诚实地打个分就有糖果<br>
       🧠 — 每天一句励志/搞怪语(内置 144 句)<br>
       ⭐ — 游戏化激励:打卡/专注换糖果,开盲盒,金币银行,集考点卡<br><br>
       <span class="mut small">建议:先到 ⚙️ 设置考试日期,再到「地点管理」用当前位置校准你的自习地点。</span>
